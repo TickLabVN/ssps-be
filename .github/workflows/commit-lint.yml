@@ -1,0 +1,15 @@
+name: CI
+on:
+  - pull_request
+  - push
+
+jobs:
+  commit-lint:
+    # if: ${{ !contains(github.event.head_commit, 'skip ci') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Commit lint ✨
+        uses: wagoid/commitlint-github-action@v4

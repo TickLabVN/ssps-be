@@ -21,7 +21,9 @@
     "bootstrap": "yarn start:docker && yarn && yarn db:migrate && npx prisma db seed",
     "start:docker": "docker-compose -f docker-compose.dev.yml up -d",
     "clean:docker": "docker-compose -f docker-compose.dev.yml down --volumes --remove-orphans",
-    "clean:git": "git branch --merged >/tmp/merged-branches && nano /tmp/merged-branches && xargs git branch -D </tmp/merged-branches && git fetch --prune --all"
+    "clean:git": "git branch --merged >/tmp/merged-branches && nano /tmp/merged-branches && xargs git branch -D </tmp/merged-branches && git fetch --prune --all",
+    "commit": "cz",
+    "commit:setup": "commitizen init cz-conventional-changelog --yarn --dev --exact"
   },
   "dependencies": {
     "@fastify/cookie": "^9.0.4",
@@ -40,6 +42,8 @@
     "prisma": "^5.1.1"
   },
   "devDependencies": {
+    "@commitlint/cli": "^17.7.1",
+    "@commitlint/config-conventional": "^17.7.0",
     "@types/bcrypt": "^5.0.0",
     "@types/jest": "^29.5.3",
     "@types/jsonwebtoken": "^9.0.2",
@@ -47,7 +51,9 @@
     "@typescript-eslint/eslint-plugin": "^6.2.1",
     "@typescript-eslint/parser": "^6.2.1",
     "barrelsby": "^2.8.0",
+    "commitizen": "^4.3.0",
     "cross-env": "^7.0.3",
+    "cz-conventional-changelog": "^3.3.0",
     "dotenv-cli": "^7.2.1",
     "eslint": "^8.46.0",
     "eslint-config-prettier": "^9.0.0",
@@ -65,5 +71,10 @@
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   }
 }
