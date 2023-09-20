@@ -17,11 +17,8 @@ export function createServer(config: ServerConfig): FastifyInstance {
         hook: 'onRequest'
     } as FastifyCookieOptions);
 
-    // Swagger on production will be turned off in the future
-    if (envs.isDev) {
-        app.register(import('@fastify/swagger'), swaggerConfig);
-        app.register(import('@fastify/swagger-ui'), swaggerUIConfig);
-    }
+    app.register(import('@fastify/swagger'), swaggerConfig);
+    app.register(import('@fastify/swagger-ui'), swaggerUIConfig);
 
     app.register(authPlugin, { prefix: '/auth' });
     app.register(apiPlugin, { prefix: '/api' });

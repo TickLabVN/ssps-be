@@ -5,7 +5,7 @@ const prisma = new PrismaClient();
 const SALT_ROUNDS = 10;
 
 const user = {
-    email: 'npvinh0507@gmail.com',
+    email: 'ssps@gmail.com',
     password: '123456789'
 };
 
