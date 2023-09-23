@@ -6,6 +6,7 @@ export const userPlugin = createRoutes('User', [
     {
         method: 'GET',
         url: '',
+        roles: ['*'],
         schema: {
             response: {
                 200: UserDto

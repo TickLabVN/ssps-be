@@ -15,6 +15,6 @@ export async function verifyToken(req: FastifyRequest, res: FastifyReply) {
         return;
     } catch (err) {
         req.log.info(err);
-        return res.forbidden(INVALID_TOKEN);
+        return res.unauthorized(INVALID_TOKEN);
     }
 }
