@@ -3,5 +3,6 @@
  */
 
 export * from './auth.dto';
+export * from './homeSlide.dto';
 export * from './printingRequest.dto';
 export * from './user.dto';
