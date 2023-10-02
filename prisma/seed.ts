@@ -1,35 +1,42 @@
 import { hashSync } from 'bcrypt';
-import { PrismaClient } from '@prisma/client';
+import { $Enums, PrismaClient, Student } from '@prisma/client';
 import { USER_ROLES } from '../src/constants/auth';
 import { UserRole } from 'src/types/auth';
 
 const prisma = new PrismaClient();
 const SALT_ROUNDS = 10;
 
-const users: { userName: string; password: string; roles: (keyof typeof USER_ROLES)[] }[] = [
-    {
-        userName: 'student',
-        password: '123456789',
-        roles: ['student']
-    },
-    {
-        userName: 'ssps@gmail.com',
-        password: '123456789',
-        roles: ['admin']
-    },
-    {
-        userName: 'root',
-        password: '123456789',
-        roles: ['admin', 'student']
-    }
-];
+const generateUser = async () => {
+    const users: { userName: string; password: string; roles: (keyof typeof USER_ROLES)[]; name: string; email: string }[] = [
+        {
+            userName: 'student',
+            password: '123456789',
+            roles: ['student'],
+            name: 'Student name',
+            email: 'student@example.com'
+        },
+        {
+            userName: 'ssps@gmail.com',
+            password: '123456789',
+            roles: ['admin'],
+            name: 'Admin name',
+            email: 'admin@example.com'
+        },
+        {
+            userName: 'root',
+            password: '123456789',
+            roles: ['admin', 'student'],
+            name: 'Root name',
+            email: 'root@example.com'
+        }
+    ];
 
-async function generateSampleData() {
     const handledUsers = users.map((user) => {
-        const hashPassword = hashSync(user.password, SALT_ROUNDS);
-        const roleValue: UserRole[] = user.roles.map((role) => USER_ROLES[role]);
+        const { password, roles, ...remain } = user;
+        const hashPassword = hashSync(password, SALT_ROUNDS);
+        const roleValue: UserRole[] = roles.map((role) => USER_ROLES[role]);
         return {
-            userName: user.userName,
+            ...remain,
             password: hashPassword,
             role: roleValue
         };
@@ -40,6 +47,132 @@ async function generateSampleData() {
     });
 
     console.log(sampleUsers);
+};
+
+const generateStudent = async () => {
+    // Fetch the user ID for a student with the specified role
+    const studentUser = await prisma.user.findFirst({
+        select: {
+            id: true
+        },
+        where: {
+            role: { has: USER_ROLES.student }
+        }
+    });
+
+    // Check if a student user with the specified role exists
+    if (!studentUser) {
+        console.error('No student user found with the specified role.');
+        return;
+    }
+
+    const students: Student[] = [
+        {
+            default_coin_per_sem: 100,
+            remain_coin: 50,
+            id: studentUser.id // Use the extracted user ID
+        }
+    ];
+
+    const sampleStudents = await prisma.student.createMany({
+        data: students
+    });
+
+    console.log(sampleStudents);
+};
+
+const generatePrintingRequest = async () => {
+    const studentUser = await prisma.user.findFirst({
+        select: {
+            id: true
+        },
+        where: {
+            role: { has: USER_ROLES.student }
+        }
+    });
+
+    // Check if a student user with the specified role exists
+    if (!studentUser) {
+        console.error('No student user found with the specified role.');
+        return;
+    }
+
+    const printingRequests: {
+        status: $Enums.PrintingStatus;
+        location: string;
+        number: number;
+        fileName: string;
+        pageNumber: number;
+        coins: number;
+        paid: $Enums.Paid;
+        userId: string;
+    }[] = [
+        {
+            status: 'progressing',
+            location: 'Thu Duc, Ho Chi Minh, Viet Nam',
+            number: 2,
+            fileName: 'file1.pdf',
+            pageNumber: 10,
+            coins: 50,
+            paid: 'paid',
+            userId: studentUser.id
+        },
+        {
+            status: 'ready',
+            location: 'Tan Phu, Ho Chi Minh, Viet Nam',
+            number: 2,
+            fileName: 'file2.docx',
+            pageNumber: 20,
+            coins: 75,
+            paid: 'paid',
+            userId: studentUser.id
+        },
+        {
+            status: 'done',
+            location: 'Tan Phu, Ho Chi Minh, Viet Nam',
+            number: 2,
+            fileName: 'file3.txt',
+            pageNumber: 5,
+            coins: 30,
+            paid: 'not_paid',
+            userId: studentUser.id
+        },
+        {
+            status: 'canceled',
+            location: 'Tan Phu, Ho Chi Minh, Viet Nam',
+            number: 2,
+            fileName: 'file3.txt',
+            pageNumber: 5,
+            coins: 30,
+            paid: 'not_paid',
+            userId: studentUser.id
+        },
+        {
+            status: 'done',
+            location: 'Tan Phu, Ho Chi Minh, Viet Nam',
+            number: 2,
+            fileName: 'file3.txt',
+            pageNumber: 5,
+            coins: 30,
+            paid: 'paid',
+            userId: studentUser.id
+        }
+    ];
+
+    const samplePrintingRequest = await prisma.printingRequest.createMany({
+        data: printingRequests
+    });
+
+    console.log(samplePrintingRequest);
+};
+
+async function generateSampleData() {
+    await generateUser();
+
+    await generateStudent();
+
+    await generatePrintingRequest();
+
     process.exit(0);
 }
 
