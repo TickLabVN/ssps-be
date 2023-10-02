@@ -8,7 +8,7 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
         url: '',
         roles: ['*'],
         schema: {
-            summary: 'Get printing request of specific user',
+            summary: 'Get printing request list of current user',
             response: {
                 200: PrintingResultDto
             }
