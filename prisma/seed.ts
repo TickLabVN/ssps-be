@@ -1,13 +1,20 @@
 import { hashSync } from 'bcrypt';
 import { $Enums, PrismaClient, Student } from '@prisma/client';
-import { USER_ROLES } from '../src/constants/auth';
-import { UserRole } from 'src/types/auth';
+
+const USER_ROLES = {
+    admin: 5150,
+    student: 2001,
+    printer_manager: 3001,
+    maintainer: 4001
+};
+
+type UserRole = keyof typeof USER_ROLES;
 
 const prisma = new PrismaClient();
 const SALT_ROUNDS = 10;
 
-const generateUser = async () => {
-    const users: { userName: string; password: string; roles: (keyof typeof USER_ROLES)[]; name: string; email: string }[] = [
+const createUser = async () => {
+    const users: { userName: string; password: string; roles: UserRole[]; name: string; email: string }[] = [
         {
             userName: 'student',
             password: '123456789',
@@ -34,7 +41,7 @@ const generateUser = async () => {
     const handledUsers = users.map((user) => {
         const { password, roles, ...remain } = user;
         const hashPassword = hashSync(password, SALT_ROUNDS);
-        const roleValue: UserRole[] = roles.map((role) => USER_ROLES[role]);
+        const roleValue: number[] = roles.map((role) => USER_ROLES[role]);
         return {
             ...remain,
             password: hashPassword,
@@ -49,7 +56,7 @@ const generateUser = async () => {
     console.log(sampleUsers);
 };
 
-const generateStudent = async () => {
+const createStudent = async () => {
     // Fetch the user ID for a student with the specified role
     const studentUser = await prisma.user.findFirst({
         select: {
@@ -81,7 +88,7 @@ const generateStudent = async () => {
     console.log(sampleStudents);
 };
 
-const generatePrintingRequest = async () => {
+const createPrintingRequest = async () => {
     const studentUser = await prisma.user.findFirst({
         select: {
             id: true
@@ -167,11 +174,11 @@ const generatePrintingRequest = async () => {
 };
 
 async function generateSampleData() {
-    await generateUser();
+    await createUser();
 
-    await generateStudent();
+    await createStudent();
 
-    await generatePrintingRequest();
+    await createPrintingRequest();
 
     process.exit(0);
 }

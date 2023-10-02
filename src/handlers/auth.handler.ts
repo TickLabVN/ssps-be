@@ -4,7 +4,7 @@ import { cookieOptions, DUPLICATED_userName, LOGIN_FAIL, SALT_ROUNDS, USER_NOT_F
 import jwt from 'jsonwebtoken';
 import { envs } from '@configs';
 import { User } from '@prisma/client';
-import { AuthInputDto } from '@dtos/in';
+import { AuthInputDto, SignUpRequestDto } from '@dtos/in';
 import { AuthResultDto } from '@dtos/out';
 import { Handler } from '@interfaces';
 import { logger } from '@utils';
@@ -33,14 +33,17 @@ const login: Handler<AuthResultDto, { Body: AuthInputDto }> = async (req, res) =
     };
 };
 
-const signup: Handler<AuthResultDto, { Body: AuthInputDto }> = async (req, res) => {
+const signup: Handler<AuthResultDto, { Body: SignUpRequestDto }> = async (req, res) => {
     const hashPassword = await hash(req.body.password, SALT_ROUNDS);
     let user: User;
     try {
         user = await prisma.user.create({
             data: {
                 userName: req.body.userName,
-                password: hashPassword
+                password: hashPassword,
+                name: req.body.name,
+                role: req.body.role,
+                email: req.body.email
             }
         });
     } catch (err) {
