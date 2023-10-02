@@ -1,10 +1,19 @@
+// import { USER_ROLES } from '@constants';
+import { USER_ROLES } from '@constants';
 import { FastifyInstance, RouteOptions } from 'fastify';
 
 export function createRoutes(swaggerTag: HandlerTag, routesOptions: RouteOptions[]) {
     return async function (app: FastifyInstance) {
         routesOptions.forEach((options) => {
+            const { roles, ...remainOptions } = options;
+
+            const preValidation = roles ? (roles.includes('*') ? null : app.checkRoles(roles)) : app.checkRoles([USER_ROLES.admin]);
+
+            const preValidationArray = preValidation ? { preValidation } : {};
+
             app.route({
-                ...options,
+                ...remainOptions,
+                ...preValidationArray,
                 schema: {
                     ...options.schema,
                     tags: [swaggerTag]

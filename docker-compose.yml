@@ -3,22 +3,24 @@ services:
   postgres:
     image: postgres:15
     container_name: postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
+    env_file:
+      - .env
     ports:
       - 5432:5432
     volumes:
       - postgres_db:/var/lib/postgresql/data
     restart: always
+    networks:
+      - ssps
 
   fastify:
     build:
       context: .
       dockerfile: ./Dockerfile
-    image: ghcr.io/phucvinh57/fastify-template:0.1.0
-    container_name: fastify_template
+    # image: ghcr.io/ticklabvn/ssps-be:latest
+    container_name: ssps-be
+    env_file:
+      - .env
     ports:
       - 8080:8080
     volumes:
@@ -26,6 +28,18 @@ services:
     depends_on:
       - postgres
     restart: always
-  
+    networks:
+      - ssps
+
 volumes:
   postgres_db:
+
+networks:
+  ssps:
+    external:
+      name: ssps
+
+# run the following command after docker compose up to create seed data:
+# docker-compose exec fastify npx prisma db seed
+# if the ssps network haven't created yet, run the following command:
+# docker network create --driver bridge ssps

@@ -3,4 +3,5 @@
  */
 
 export * from './createRoutes';
+export * from './decorate.plugin';
 export * from './logger';

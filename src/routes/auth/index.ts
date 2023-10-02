@@ -1,4 +1,5 @@
-import { AuthInputDto } from '@dtos/in';
+import { USER_ROLES } from '@constants';
+import { AuthInputDto, SignUpRequestDto } from '@dtos/in';
 import { AuthResultDto } from '@dtos/out';
 import { authHandler } from '@handlers';
 import { createRoutes } from '@utils';
@@ -7,6 +8,7 @@ export const authPlugin = createRoutes('Auth', [
     {
         method: 'POST',
         url: '/login',
+        roles: ['*'],
         schema: {
             body: AuthInputDto,
             response: {
@@ -18,8 +20,9 @@ export const authPlugin = createRoutes('Auth', [
     {
         method: 'POST',
         url: '/signup',
+        roles: [USER_ROLES.admin],
         schema: {
-            body: AuthInputDto,
+            body: SignUpRequestDto,
             response: {
                 200: AuthResultDto
             }

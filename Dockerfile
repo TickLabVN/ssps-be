@@ -27,4 +27,4 @@ COPY --chown=node:node --from=development /app/dist .
 COPY --chown=node:node --from=development /app/node_modules node_modules
 
 EXPOSE 8080
-CMD yarn db:deploy && node index.js
+CMD yarn db:deploy && node src/index.js

@@ -3,7 +3,7 @@ import { Static, Type } from '@sinclair/typebox';
 
 export const AuthResultDto = Type.Object({
     id: ObjectId,
-    email: Type.String({ format: 'email' })
+    userName: Type.String({ format: 'userName' })
 });
 
 export type AuthResultDto = Static<typeof AuthResultDto>;
