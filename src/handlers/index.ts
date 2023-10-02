@@ -3,4 +3,6 @@
  */
 
 export * from './auth.handler';
+export * from './home.handler';
+export * from './printingRequest.handler';
 export * from './user.handler';

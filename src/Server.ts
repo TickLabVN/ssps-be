@@ -2,6 +2,7 @@ import fastify, { FastifyInstance } from 'fastify';
 import type { FastifyCookieOptions } from '@fastify/cookie';
 import { CORS_WHITE_LIST, customErrorHandler, envs, loggerConfig, swaggerConfig, swaggerUIConfig } from '@configs';
 import { apiPlugin, authPlugin } from './routes';
+import { checkRoles } from '@hooks';
 
 export function createServer(config: ServerConfig): FastifyInstance {
     const app = fastify({ logger: loggerConfig[envs.NODE_ENV] });
@@ -19,6 +20,9 @@ export function createServer(config: ServerConfig): FastifyInstance {
 
     app.register(import('@fastify/swagger'), swaggerConfig);
     app.register(import('@fastify/swagger-ui'), swaggerUIConfig);
+
+    app.decorate('checkRoles', checkRoles);
+    app.decorate('roles', []);
 
     app.register(authPlugin, { prefix: '/auth' });
     app.register(apiPlugin, { prefix: '/api' });
