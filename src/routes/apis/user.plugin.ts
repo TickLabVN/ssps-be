@@ -1,4 +1,4 @@
-import { UserDto } from '@dtos/out';
+import { RemainCoinDto, UserDto } from '@dtos/out';
 import { usersHandler } from '@handlers';
 import { createRoutes } from '@utils';
 
@@ -13,5 +13,17 @@ export const userPlugin = createRoutes('User', [
             }
         },
         handler: usersHandler.getUserById
+    },
+    {
+        method: 'GET',
+        url: '/remain-coins',
+        roles: ['*'],
+        schema: {
+            description: 'get remain coin of current student',
+            response: {
+                200: RemainCoinDto
+            }
+        },
+        handler: usersHandler.getCoin
     }
 ]);
