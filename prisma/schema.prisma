@@ -31,15 +31,23 @@ model Student {
 
 model PrintingRequest {
   id         String         @id @default(cuid())
-  status     PrintingStatus
+  status     PrintingStatus @default(progressing)
   location   String
   number     Int
-  fileNames  String[]
   pageNumber Int
   coins      Int
   paid       Paid
   student    Student        @relation(fields: [userId], references: [id])
   userId     String
+  File       File[]
+}
+
+model File {
+  id               String          @id @default(cuid())
+  realName         String
+  minioName        String          @unique
+  printingRequest   PrintingRequest @relation(fields: [printingRequestId], references: [id])
+  printingRequestId String
 }
 
 enum PrintingStatus {

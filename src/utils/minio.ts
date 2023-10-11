@@ -13,6 +13,20 @@ const uploadFileToMinio = async (objectName: string, fileBuffer: Buffer) => {
     }
 };
 
+const removeFileFromMinio = async (objectName: string) => {
+    const bucketExists = await minioClient.bucketExists(envs.MINIO_BUCKET_NAME);
+
+    if (!bucketExists) {
+        throw new Error("Bucket doesn't exist");
+    }
+
+    try {
+        await minioClient.removeObject(envs.MINIO_BUCKET_NAME, objectName);
+    } catch (error) {
+        throw new Error(`Error removing file from Minio: ${error.message}`);
+    }
+};
+
 const getFileFromMinio = async (objectName: string): Promise<Buffer> => {
     const bucketExists = await minioClient.bucketExists(envs.MINIO_BUCKET_NAME);
     if (!bucketExists) {
@@ -42,4 +56,4 @@ const getFileFromMinio = async (objectName: string): Promise<Buffer> => {
     }
 };
 
-export const minio = { uploadFileToMinio, getFileFromMinio };
+export const minio = { uploadFileToMinio, getFileFromMinio, removeFileFromMinio };

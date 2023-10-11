@@ -1,4 +1,6 @@
-export const PRINTING_STATUS = {
+import { PrintingStatus } from '@prisma/client';
+
+export const PRINTING_STATUS: Record<string, PrintingStatus> = {
     progressing: 'progressing',
     ready: 'ready',
     done: 'done',

@@ -1,10 +1,11 @@
 import { Handler } from '@interfaces';
 import { UploadFileResultDto } from '@dtos/out';
-import { logger, minio } from '@utils';
+import { minio } from '@utils';
 import { UploadFileInputDto } from '@dtos/in';
 import { PRINTING_CONFIGS } from '@configs';
 import { PrintingConfigs } from 'src/types/printing';
 import { prisma } from '@repositories';
+import { PRINTING_STATUS } from '@constants';
 
 const parseAndCheckConfig = (configJSON: string): { missingAttributes: string[] | undefined; config: PrintingConfigs | undefined } => {
     try {
@@ -18,8 +19,6 @@ const parseAndCheckConfig = (configJSON: string): { missingAttributes: string[] 
 
 const isPrintingRequestExist: (printingRequestId: string) => Promise<boolean> = async (printingRequestId) => {
     try {
-        logger.info(printingRequestId);
-
         if (!printingRequestId) {
             throw Error('printingRequestId cannot be null');
         }
@@ -29,11 +28,33 @@ const isPrintingRequestExist: (printingRequestId: string) => Promise<boolean> = 
             where: { id: printingRequestId }
         });
 
-        logger.info(printingRequest);
-
         return !!printingRequest;
     } catch (error) {
         return false;
+    }
+};
+
+const updateFileAndStatusOfPrintingRequestToDb = async (minioName: string, config: PrintingConfigs) => {
+    try {
+        await prisma.$transaction([
+            prisma.printingRequest.update({
+                where: {
+                    id: config.printingRequestId
+                },
+                data: {
+                    status: PRINTING_STATUS.progressing
+                }
+            }),
+            prisma.file.create({
+                data: {
+                    realName: config.fileName,
+                    minioName,
+                    printingRequestId: config.printingRequestId
+                }
+            })
+        ]);
+    } catch (error) {
+        throw new Error('Failed to update file and status in the database');
     }
 };
 
@@ -42,18 +63,13 @@ const handleFileUpload = async (userId: string, data: string, config: PrintingCo
     const fileName = `${userId}/${config.printingRequestId}/${timestamp}_${config.fileName}`;
     const buffer = Buffer.from(data);
 
-    await minio.uploadFileToMinio(fileName, buffer);
-
-    await prisma.printingRequest.update({
-        where: {
-            id: config.printingRequestId
-        },
-        data: {
-            fileNames: {
-                push: fileName
-            }
-        }
-    });
+    try {
+        await minio.uploadFileToMinio(fileName, buffer);
+        await updateFileAndStatusOfPrintingRequestToDb(fileName, config);
+    } catch (error) {
+        await minio.removeFileFromMinio(fileName);
+        throw new Error('File upload and database update failed');
+    }
 };
 
 const uploadFileToPrintingRequest: Handler<UploadFileResultDto, { consumes: ['multipart/form-data']; Body: UploadFileInputDto }> = async (
@@ -62,23 +78,19 @@ const uploadFileToPrintingRequest: Handler<UploadFileResultDto, { consumes: ['mu
 ) => {
     try {
         const data = req.body.file;
-
         if (!data) return res.badRequest('Missing the file');
 
         const configJSON = req.body.config;
-
         if (!configJSON) {
             return res.badRequest('Missing or empty config data');
         }
 
         const { missingAttributes, config } = parseAndCheckConfig(configJSON);
-
         if (missingAttributes || !config) {
             return res.badRequest(`Config is missing the following required attributes: ${missingAttributes?.join(', ')}`);
         }
 
         const isPrintingRequestValid = await isPrintingRequestExist(config.printingRequestId);
-
         if (!isPrintingRequestValid) {
             return res.badRequest('The specified printing request does not exist or is not valid');
         }
