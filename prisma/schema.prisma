@@ -34,7 +34,7 @@ model PrintingRequest {
   status     PrintingStatus
   location   String
   number     Int
-  fileName   String
+  fileNames  String[]
   pageNumber Int
   coins      Int
   paid       Paid

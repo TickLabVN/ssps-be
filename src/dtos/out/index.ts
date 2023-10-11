@@ -4,6 +4,8 @@
 
 export * from './auth.dto';
 export * from './homeSlide.dto';
+export * from './printFile.dto';
 export * from './printingRequest.dto';
+export * from './uploadFile.dto';
 export * from './user/remainCoin.dto';
 export * from './user/user.dto';

@@ -4,5 +4,7 @@
 
 export * from './auth.handler';
 export * from './home.handler';
+export * from './print.handler';
 export * from './printingRequest.handler';
+export * from './uploadFile.handler';
 export * from './user.handler';

@@ -1,3 +1,4 @@
+import { PRINTING_STATUS } from '@constants';
 import { Static, Type } from '@sinclair/typebox';
 
 export const PrintingResultDto = Type.Array(
@@ -12,4 +13,10 @@ export const PrintingResultDto = Type.Array(
     })
 );
 
+export const ExecutePrintingRequestResultDto = Type.Object({
+    PrintingStatus: Type.Enum(PRINTING_STATUS)
+});
+
 export type PrintingResultDto = Static<typeof PrintingResultDto>;
+
+export type ExecutePrintingRequestResultDto = Static<typeof ExecutePrintingRequestResultDto>;

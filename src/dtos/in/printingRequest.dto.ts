@@ -6,4 +6,10 @@ export const PrintingRequestInputDto = Type.Object({
     userName: Type.String()
 });
 
+export const ExecutePrintingRequestInputDto = Type.Object({
+    printingRequestId: Type.String()
+});
+
+export type ExecutePrintingRequestInputDto = Static<typeof ExecutePrintingRequestInputDto>;
+
 export type PrintingRequestInputDto = Static<typeof PrintingRequestInputDto>;
