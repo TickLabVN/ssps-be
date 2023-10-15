@@ -18,7 +18,7 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
     },
     {
         method: 'POST',
-        url: '/uploadFile',
+        url: '/upload',
         roles: ['*'],
         schema: {
             summary: 'Upload file to printing request',
@@ -31,15 +31,15 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
     },
     {
         method: 'POST',
-        url: '/printingFile',
+        url: '/execute',
         roles: ['*'],
         schema: {
-            summary: 'Printing file',
+            summary: 'Execute printing request',
             body: PrintingFileInputDto,
             response: {
                 200: PrintingFileResultDto
             }
         },
-        handler: printingFileHandler.printFile
+        handler: printingFileHandler.executePrintingRequest
     }
 ]);
