@@ -6,9 +6,19 @@ export const CreatePrintingRequestInputDto = Type.Object({
     userName: Type.String()
 });
 
-export const ExecutePrintingRequestInputDto = Type.Object({
+export const PrintingRequestInputDto = Type.Object({
     printingRequestId: Type.String()
 });
 
+export const FilePrintingRequestInputDto = Type.Object({
+    fileId: Type.String()
+});
+
+export const DeleteFilePrintingRequestInputDto = Type.Object({
+    fileId: Type.String()
+});
+
 export type CreatePrintingRequestInputDto = Static<typeof CreatePrintingRequestInputDto>;
-export type ExecutePrintingRequestInputDto = Static<typeof ExecutePrintingRequestInputDto>;
+export type PrintingRequestInputDto = Static<typeof PrintingRequestInputDto>;
+export type FilePrintingRequestInputDto = Static<typeof FilePrintingRequestInputDto>;
+export type DeleteFilePrintingRequestInputDto = Static<typeof DeleteFilePrintingRequestInputDto>;

@@ -1,6 +1,13 @@
-import { PrintingFileInputDto } from '@dtos/in';
-import { PrintingFileResultDto, GetPrintingRequestResultDto, UploadFileResultDto, CreatePrintingRequestResultDto } from '@dtos/out';
-import { printingRequestHandler, printingFileHandler, uploadFileHandler } from '@handlers';
+import { DeleteFilePrintingRequestInputDto, FilePrintingRequestInputDto, PrintingRequestInputDto } from '@dtos/in';
+import {
+    PrintingFileResultDto,
+    GetPrintingRequestResultDto,
+    UploadFileResultDto,
+    CreatePrintingRequestResultDto,
+    DeleteFilePrintingRequestResultDto,
+    AllFilesPrintingRequestResultDto
+} from '@dtos/out';
+import { printingRequestHandler } from '@handlers';
 import { createRoutes } from '@utils';
 
 export const printingRequestPlugin = createRoutes('Printing Request', [
@@ -39,7 +46,47 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
                 200: UploadFileResultDto
             }
         },
-        handler: uploadFileHandler.uploadFileToPrintingRequest
+        handler: printingRequestHandler.uploadFileToPrintingRequest
+    },
+    {
+        method: 'GET',
+        roles: ['*'],
+        url: '/:printingRequestId/files',
+        schema: {
+            summary: 'Get all files of printing request',
+            params: PrintingRequestInputDto,
+            response: {
+                200: AllFilesPrintingRequestResultDto
+            }
+        },
+        handler: printingRequestHandler.getAllFilesPrintingRequest
+    },
+    {
+        method: 'GET',
+        roles: ['*'],
+        url: '/:printingRequestId/file/:fileId',
+        schema: {
+            summary: 'Get the specific files of printing request',
+            params: FilePrintingRequestInputDto,
+            response: {
+                200: AllFilesPrintingRequestResultDto
+            }
+        },
+        handler: printingRequestHandler.getAllFilesPrintingRequest
+    },
+    {
+        method: 'DELETE',
+        roles: ['*'],
+        url: '/:printingRequestId/file',
+        schema: {
+            summary: 'Delete the specific file of printing request',
+            params: PrintingRequestInputDto,
+            body: DeleteFilePrintingRequestInputDto,
+            response: {
+                200: DeleteFilePrintingRequestResultDto
+            }
+        },
+        handler: printingRequestHandler.deleteFilePrintingRequest
     },
     {
         method: 'POST',
@@ -47,11 +94,11 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
         roles: ['*'],
         schema: {
             summary: 'Execute printing request',
-            body: PrintingFileInputDto,
+            body: PrintingRequestInputDto,
             response: {
                 200: PrintingFileResultDto
             }
         },
-        handler: printingFileHandler.executePrintingRequest
+        handler: printingRequestHandler.executePrintingRequest
     }
 ]);

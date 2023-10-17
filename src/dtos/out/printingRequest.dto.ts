@@ -17,6 +17,19 @@ export const CreatePrintingRequestResultDto = Type.Object({
     id: Type.String()
 });
 
+export const AllFilesPrintingRequestResultDto = Type.Array(
+    Type.Object({
+        id: Type.String(),
+        fileName: Type.String()
+    })
+);
+
+export const DeleteFilePrintingRequestResultDto = Type.Object({
+    status: Type.String(),
+    fileId: Type.String(),
+    message: Type.String()
+});
+
 export const ExecutePrintingRequestResultDto = Type.Object({
     PrintingStatus: Type.Enum(PRINTING_STATUS)
 });
@@ -24,5 +37,9 @@ export const ExecutePrintingRequestResultDto = Type.Object({
 export type GetPrintingRequestResultDto = Static<typeof GetPrintingRequestResultDto>;
 
 export type CreatePrintingRequestResultDto = Static<typeof CreatePrintingRequestResultDto>;
+
+export type AllFilesPrintingRequestResultDto = Static<typeof AllFilesPrintingRequestResultDto>;
+
+export type DeleteFilePrintingRequestResultDto = Static<typeof DeleteFilePrintingRequestResultDto>;
 
 export type ExecutePrintingRequestResultDto = Static<typeof ExecutePrintingRequestResultDto>;
