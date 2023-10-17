@@ -32,20 +32,27 @@ model Student {
 model PrintingRequest {
   id         String         @id @default(cuid())
   status     PrintingStatus @default(progressing)
-  location   String
-  number     Int
-  pageNumber Int
-  coins      Int
+  number     Int            @default(0)
+  pageNumber Int            @default(0)
+  coins      Int            @default(0)
   paid       Paid
   student    Student        @relation(fields: [userId], references: [id])
   userId     String
-  File       File[]
+  files      File[]
+  location   Location?       @relation(fields: [locationId], references: [id])
+  locationId  String?
+}
+
+model Location {
+  id              String            @id @default(cuid())
+  address         String
+  PrintingRequest PrintingRequest[]
 }
 
 model File {
-  id               String          @id @default(cuid())
-  realName         String
-  minioName        String          @unique
+  id                String          @id @default(cuid())
+  realName          String
+  minioName         String          @unique
   printingRequest   PrintingRequest @relation(fields: [printingRequestId], references: [id])
   printingRequestId String
 }

@@ -1,5 +1,5 @@
 import { PrintingFileInputDto } from '@dtos/in';
-import { PrintingFileResultDto, PrintingResultDto, UploadFileResultDto } from '@dtos/out';
+import { PrintingFileResultDto, GetPrintingRequestResultDto, UploadFileResultDto, CreatePrintingRequestResultDto } from '@dtos/out';
 import { printingRequestHandler, printingFileHandler, uploadFileHandler } from '@handlers';
 import { createRoutes } from '@utils';
 
@@ -11,7 +11,19 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
         schema: {
             summary: 'Get printing request list of current user',
             response: {
-                200: PrintingResultDto
+                200: GetPrintingRequestResultDto
+            }
+        },
+        handler: printingRequestHandler.getAllPrintingRequest
+    },
+    {
+        method: 'POST',
+        url: '',
+        roles: ['*'],
+        schema: {
+            summary: 'Create printing request',
+            response: {
+                200: CreatePrintingRequestResultDto
             }
         },
         handler: printingRequestHandler.getAllPrintingRequest

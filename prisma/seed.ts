@@ -88,6 +88,38 @@ const createStudent = async () => {
     console.log(sampleStudents);
 };
 
+const createLocation = async () => {
+    const locations: { address: string }[] = [
+        {
+            address: 'H1'
+        },
+        {
+            address: 'H2'
+        },
+        {
+            address: 'H3'
+        },
+        {
+            address: 'H6'
+        }
+    ];
+
+    const sampleLocations = await prisma.location.createMany({
+        data: locations
+    });
+
+    console.log(sampleLocations);
+};
+
+function getRandomElementFromArray<T>(arr: T[]): T | undefined {
+    if (arr.length === 0) {
+        return undefined; // Return undefined if the array is empty
+    }
+
+    const randomIndex = Math.floor(Math.random() * arr.length);
+    return arr[randomIndex];
+}
+
 const createPrintingRequest = async () => {
     const studentUser = await prisma.user.findFirst({
         select: {
@@ -98,7 +130,10 @@ const createPrintingRequest = async () => {
         }
     });
 
-    // Check if a student user with the specified role exists
+    const locations = await prisma.location.findMany({
+        select: { id: true }
+    });
+
     if (!studentUser) {
         console.error('No student user found with the specified role.');
         return;
@@ -106,9 +141,8 @@ const createPrintingRequest = async () => {
 
     const printingRequests: {
         status: $Enums.PrintingStatus;
-        location: string;
+        locationId: string | undefined;
         number: number;
-        fileName: string;
         pageNumber: number;
         coins: number;
         paid: $Enums.Paid;
@@ -116,9 +150,8 @@ const createPrintingRequest = async () => {
     }[] = [
         {
             status: 'progressing',
-            location: 'Thu Duc, Ho Chi Minh, Viet Nam',
+            locationId: getRandomElementFromArray(locations)?.id,
             number: 2,
-            fileName: 'file1.pdf',
             pageNumber: 10,
             coins: 50,
             paid: 'paid',
@@ -126,9 +159,8 @@ const createPrintingRequest = async () => {
         },
         {
             status: 'ready',
-            location: 'Tan Phu, Ho Chi Minh, Viet Nam',
+            locationId: getRandomElementFromArray(locations)?.id,
             number: 2,
-            fileName: 'file2.docx',
             pageNumber: 20,
             coins: 75,
             paid: 'paid',
@@ -136,9 +168,8 @@ const createPrintingRequest = async () => {
         },
         {
             status: 'done',
-            location: 'Tan Phu, Ho Chi Minh, Viet Nam',
+            locationId: getRandomElementFromArray(locations)?.id,
             number: 2,
-            fileName: 'file3.txt',
             pageNumber: 5,
             coins: 30,
             paid: 'not_paid',
@@ -146,9 +177,8 @@ const createPrintingRequest = async () => {
         },
         {
             status: 'canceled',
-            location: 'Tan Phu, Ho Chi Minh, Viet Nam',
+            locationId: getRandomElementFromArray(locations)?.id,
             number: 2,
-            fileName: 'file3.txt',
             pageNumber: 5,
             coins: 30,
             paid: 'not_paid',
@@ -156,9 +186,8 @@ const createPrintingRequest = async () => {
         },
         {
             status: 'done',
-            location: 'Tan Phu, Ho Chi Minh, Viet Nam',
+            locationId: getRandomElementFromArray(locations)?.id,
             number: 2,
-            fileName: 'file3.txt',
             pageNumber: 5,
             coins: 30,
             paid: 'paid',
@@ -177,6 +206,8 @@ async function generateSampleData() {
     await createUser();
 
     await createStudent();
+
+    await createLocation();
 
     await createPrintingRequest();
 

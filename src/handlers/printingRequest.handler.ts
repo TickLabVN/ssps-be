@@ -1,19 +1,20 @@
 import { prisma } from '@repositories';
-import { PrintingResultDto } from '@dtos/out';
+import { GetPrintingRequestResultDto } from '@dtos/out';
 import { Handler } from '@interfaces';
 import { PAID, PRINTING_STATUS } from '@constants';
 
-const getAllPrintingRequest: Handler<PrintingResultDto, { Params: { userId: string } }> = async (req) => {
+const getAllPrintingRequest: Handler<GetPrintingRequestResultDto, { Params: { userId: string } }> = async (req) => {
     const userId = req.userId;
     const printingRequests = await prisma.printingRequest.findMany({
         select: {
+            id: true,
             status: true,
-            location: true,
+            location: { select: { address: true } },
             number: true,
-            fileName: true,
             pageNumber: true,
             coins: true,
-            paid: true
+            paid: true,
+            files: { select: { realName: true } }
         },
         where: {
             userId: {
@@ -23,16 +24,21 @@ const getAllPrintingRequest: Handler<PrintingResultDto, { Params: { userId: stri
     });
 
     const formattedPrintingRequests = printingRequests.map((request) => {
-        const status = request.status;
+        const { status, files, paid, location, ...remain } = request;
         const formatStatus = PRINTING_STATUS[status];
 
-        const paid = request.paid;
+        const formatFiles = files.map((item) => item.realName);
+
         const formatPaid = PAID[paid];
 
+        const formatLocation = location?.address || '';
+
         return {
-            ...request,
+            ...remain,
             status: formatStatus,
-            paid: formatPaid
+            paid: formatPaid,
+            filesName: formatFiles,
+            location: formatLocation
         };
     });
 
