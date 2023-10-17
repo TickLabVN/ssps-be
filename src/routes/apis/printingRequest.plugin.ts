@@ -9,7 +9,7 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
         url: '',
         roles: ['*'],
         schema: {
-            summary: 'Get printing request list of current user',
+            summary: 'Get all printing request of current user',
             response: {
                 200: GetPrintingRequestResultDto
             }
@@ -26,7 +26,7 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
                 200: CreatePrintingRequestResultDto
             }
         },
-        handler: printingRequestHandler.getAllPrintingRequest
+        handler: printingRequestHandler.createPrintingRequest
     },
     {
         method: 'POST',

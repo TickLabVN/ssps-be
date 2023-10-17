@@ -1,10 +1,12 @@
 import { prisma } from '@repositories';
-import { GetPrintingRequestResultDto } from '@dtos/out';
+import { CreatePrintingRequestResultDto, GetPrintingRequestResultDto } from '@dtos/out';
 import { Handler } from '@interfaces';
 import { PAID, PRINTING_STATUS } from '@constants';
+import { logger } from '@utils';
 
-const getAllPrintingRequest: Handler<GetPrintingRequestResultDto, { Params: { userId: string } }> = async (req) => {
+const getAllPrintingRequest: Handler<GetPrintingRequestResultDto> = async (req) => {
     const userId = req.userId;
+
     const printingRequests = await prisma.printingRequest.findMany({
         select: {
             id: true,
@@ -45,6 +47,25 @@ const getAllPrintingRequest: Handler<GetPrintingRequestResultDto, { Params: { us
     return formattedPrintingRequests;
 };
 
+const createPrintingRequest: Handler<CreatePrintingRequestResultDto> = async (req, res) => {
+    try {
+        const userId = req.userId;
+
+        const printingRequestId = await prisma.printingRequest.create({
+            data: {
+                userId
+            },
+            select: { id: true }
+        });
+
+        return res.status(200).send(printingRequestId);
+    } catch (err) {
+        logger.error(err);
+        throw new Error('Failed to create printing request');
+    }
+};
+
 export const printingRequestHandler = {
-    getAllPrintingRequest
+    getAllPrintingRequest,
+    createPrintingRequest
 };

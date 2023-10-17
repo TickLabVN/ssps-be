@@ -54,7 +54,7 @@ const updateFileAndStatusOfPrintingRequestToDb = async (minioName: string, confi
             })
         ]);
     } catch (error) {
-        throw new Error('Failed to update file and status in the database');
+        throw new Error('Failed to update file and status to printing request');
     }
 };
 

@@ -23,4 +23,6 @@ export const ExecutePrintingRequestResultDto = Type.Object({
 
 export type GetPrintingRequestResultDto = Static<typeof GetPrintingRequestResultDto>;
 
+export type CreatePrintingRequestResultDto = Static<typeof CreatePrintingRequestResultDto>;
+
 export type ExecutePrintingRequestResultDto = Static<typeof ExecutePrintingRequestResultDto>;
