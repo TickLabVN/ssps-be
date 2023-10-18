@@ -14,10 +14,7 @@ services:
       - ssps
 
   fastify:
-    build:
-      context: .
-      dockerfile: ./Dockerfile
-    # image: ghcr.io/ticklabvn/ssps-be:latest
+    image: ghcr.io/ticklabvn/ssps-be:latest
     container_name: ssps-be
     env_file:
       - .env
