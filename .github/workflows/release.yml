@@ -10,7 +10,7 @@ permissions:
 
 env:
   REGISTRY: ${{vars.REGISTRY_NAME}}
-  IMAGE_NAME: ${{github.repository}}
+  IMAGE_NAME: ticklabvn/ssps-be
   CD_USERNAME: ${{github.actor}}
 
 name: Release and deploy
