@@ -28,12 +28,11 @@ jobs:
           release-type: node
           pull-request-header: "Bot (:robot:) requested to create a new release on ${{ github.ref_name }}"
 
-  # Use if need to build package
   build:
     name: Build
-    needs: [release]
+    # needs: [release]
     runs-on: ubuntu-latest
-    if: ${{ needs.release.outputs.build == 'true' }}
+    # if: ${{ needs.release.outputs.build == 'true' }}
     steps:
       - uses: actions/checkout@v3
         name: Checkout repository
@@ -58,7 +57,8 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.release.outputs.tag_name }}
+          # tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.release.outputs.tag_name }}
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
   deploy:
     name: Deploy
