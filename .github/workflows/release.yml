@@ -80,7 +80,7 @@ jobs:
             echo $CR_PAT | docker login ${{ env.REGISTRY }} -u ${{ env.CD_USERNAME }} --password-stdin
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
             
-            cd $HOME/thesis-222
+            mkdir -p $HOME/ssps-be-test-cd && cd $HOME/ssps-be-test-cd
             rm -f .env
             echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .env
             echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .env
@@ -94,11 +94,12 @@ jobs:
             echo MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }} >> .env
             echo MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }} >> .env
             echo MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }} >> .env
+
+            curl -s ${{secrets.DOCKER_COMPOSE_RAW_FILE_URL}} -O -f
             
-            # curl ${{secrets.DOCKER_COMPOSE_RAW_FILE_URL}} -o docker-compose.yml
-            docker-compose stop fastify
-            docker-compose rm -f fastify
-            docker-compose up -d fastify
+            docker compose stop ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
+            docker compose rm -f ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
+            docker compose up -d ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
             
             docker logout ${{ env.REGISTRY }}
             
