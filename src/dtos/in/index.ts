@@ -3,5 +3,6 @@
  */
 
 export * from './printingRequest.dto';
+export * from './uploadFile.dto ';
 export * from './auth/auth.dto';
 export * from './auth/signUp.dto';
