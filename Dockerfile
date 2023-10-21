@@ -4,6 +4,9 @@ ARG NODE_VERSION=18.13.0
 FROM node:${NODE_VERSION}-alpine as development
 WORKDIR /app
 
+#Installing necessary packages for @thiagoelg/node-printer
+RUN apk --no-cache add python3 cups-dev make g++
+
 COPY package.json yarn.lock tsconfig.json tsconfig.compile.json jest.config.js ./
 COPY ./src ./src
 COPY ./prisma ./prisma
@@ -20,6 +23,8 @@ COPY package.json ./dist/
 ################## Stage 2 ##################
 FROM node:${NODE_VERSION}-alpine as production
 WORKDIR /app
+
+RUN apk --no-cache add python3 cups-dev
 
 ENV NODE_ENV=production
 
