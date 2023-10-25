@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.0 (2023-10-25)
+
+
+### Features
+
+* **dev-dependency:** add commitlint and commitizen for conventional commit ([413d4f1](https://github.com/TickLabVN/ssps-be/commit/413d4f10ee2efdc09c7f44242108e0d6f0f901ac))
+
 ## [1.6.0](https://github.com/phucvinh57/fastify-template/compare/v1.5.0...v1.6.0) (2023-08-22)
 
 
