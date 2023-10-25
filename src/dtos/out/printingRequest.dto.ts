@@ -20,8 +20,12 @@ export const CreatePrintingRequestResultDto = Type.Object({
 
 export const AllFilesPrintingRequestResultDto = Type.Array(
     Type.Object({
-        id: Type.String(),
-        fileName: Type.String()
+        fileId: Type.String(),
+        fileName: Type.String(),
+        numPage: Type.String(),
+        fileURL: Type.String(),
+        fileSize: Type.Number(),
+        fileCoin: Type.Number()
     })
 );
 

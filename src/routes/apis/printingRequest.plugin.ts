@@ -92,18 +92,18 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
             params: FilePrintingRequestInputDto,
             response: {
                 200: AllFilesPrintingRequestResultDto
-            }
+            },
+            deprecated: true
         },
         handler: printingRequestHandler.getAllFilesPrintingRequest
     },
     {
         method: 'DELETE',
         roles: ['*'],
-        url: '/:printingRequestId/file',
+        url: '/file/:fileId',
         schema: {
             summary: 'Delete the specific file of printing request',
-            params: PrintingRequestInputDto,
-            body: DeleteFilePrintingRequestInputDto,
+            params: DeleteFilePrintingRequestInputDto,
             response: {
                 200: DeleteFilePrintingRequestResultDto
             }

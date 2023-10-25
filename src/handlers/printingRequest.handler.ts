@@ -12,7 +12,7 @@ import { Handler, Printer } from '@interfaces';
 import { PAID, PRINTING_STATUS } from '@constants';
 import { generateUniqueHashFileName, logger, minio } from '@utils';
 import { PrintingRequestInputDto, UploadConfigBodyDto, UploadConfigParamsDto, UploadFileParamsDto } from '@dtos/in';
-import { PRICE_PER_PAGE, envs } from '@configs';
+import { ACCEPTED_EXTENSIONS, COIN_PER_PAGE, envs } from '@configs';
 import { File } from '@prisma/client';
 import { MultipartFile } from '@fastify/multipart';
 import pdf from 'pdf-parse';
@@ -146,7 +146,7 @@ const updateFileAndStatusOfPrintingRequestToDb = async (
     }
 };
 
-const handleFileUpload = async (printingRequestId: string, file: Buffer, fileName: string) => {
+const handleUploadingFile = async (printingRequestId: string, file: Buffer, fileName: string) => {
     const objectName = `${printingRequestId}/${generateUniqueHashFileName(fileName)}`;
 
     try {
@@ -156,7 +156,7 @@ const handleFileUpload = async (printingRequestId: string, file: Buffer, fileNam
             const fileMetadata = {
                 fileName: fileName,
                 minioName: objectName,
-                fileCoin: numPage * PRICE_PER_PAGE,
+                fileCoin: numPage * (await COIN_PER_PAGE),
                 fileSize: file.length,
                 numPage
             };
@@ -177,7 +177,7 @@ const handleFileUpload = async (printingRequestId: string, file: Buffer, fileNam
     }
 };
 
-const handleConfigUpload = async (fileId: string, config: PrintingConfigs) => {
+const handleUploadingConfig = async (fileId: string, config: PrintingConfigs) => {
     try {
         const file = await prisma.file.findUnique({
             where: {
@@ -228,10 +228,36 @@ const uploadFileToPrintingRequest: Handler<
     UploadFileResultDto,
     { Params: UploadFileParamsDto; consumes: ['multipart/form-data']; Body: { file: MultipartFile } }
 > = async (req, res) => {
+    const validateMultipartFile = async (file: MultipartFile) => {
+        try {
+            const maxFileSize = 100 * 1024 * 1024; // 100MB in bytes
+
+            const fileExtension = file.filename.split('.').pop();
+            if (!fileExtension || !ACCEPTED_EXTENSIONS.includes(`.${fileExtension}`)) {
+                return { error: 'Invalid file format. Accepted formats: doc, docx, xls, xlsx, ppt, jpg, png, pdf' };
+            }
+
+            const fileBuffer = await file.toBuffer();
+
+            if (fileBuffer.length > maxFileSize) {
+                return { error: 'File size exceeds the 100MB limit.' };
+            }
+
+            return null;
+        } catch (err) {
+            return { error: 'Error occurred while validating the file.' };
+        }
+    };
     try {
         const data = req.body.file;
 
         if (!data) return res.badRequest('Missing the file');
+
+        const validationResult = await validateMultipartFile(data);
+
+        if (validationResult && validationResult.error) {
+            return res.badRequest(validationResult.error);
+        }
 
         const printingRequestId = req.params.printingRequestId;
 
@@ -243,10 +269,11 @@ const uploadFileToPrintingRequest: Handler<
             return res.badRequest('The specified printing request does not exist or is not valid');
         }
 
-        const fileInformation = await handleFileUpload(printingRequestId, buffer, fileName);
+        const fileInformation = await handleUploadingFile(printingRequestId, buffer, fileName);
 
         return res.status(200).send(fileInformation);
     } catch (err) {
+        logger.error('???????');
         res.badRequest(err.message);
     }
 };
@@ -263,7 +290,7 @@ const uploadConfigToPrintingRequest: Handler<UploadConfigResultDto, { Params: Up
 
         const fileId = req.params.fileId;
 
-        await handleConfigUpload(fileId, fileConfig);
+        await handleUploadingConfig(fileId, fileConfig);
 
         return res.status(200).send({
             status: 'Configuration uploaded successfully'
@@ -289,7 +316,10 @@ const getFilesOfPrintingRequest = async (printingRequestId: string) => {
         select: {
             id: true,
             minioName: true,
-            realName: true
+            realName: true,
+            fileCoin: true,
+            fileSize: true,
+            numPage: true
         }
     });
     return files;
@@ -303,9 +333,9 @@ const executePrintingRequest: Handler<PrintingFileResultDto, { Body: PrintingReq
             const buffer = await minio.getFileFromMinio(file.minioName);
 
             await printFileFromBuffer(nodePrinter, buffer);
-
-            return res.status(200).send({ status: 'printing', message: 'The printing request is being executed' });
         });
+
+        return res.status(200).send({ status: 'printing', message: 'The printing request is being executed' });
     } catch (err) {
         logger.error(err);
         return res.status(500).send({ status: 'fail', message: err.message });
@@ -316,8 +346,15 @@ const getAllFilesPrintingRequest: Handler<AllFilesPrintingRequestResultDto, { Pa
     try {
         const filesOfPrintingRequest = await getFilesOfPrintingRequest(req.params.printingRequestId);
 
-        const formatResult = filesOfPrintingRequest.map((item) => {
-            return { id: item.id, fileName: item.realName };
+        const formatResult: FileInformation[] = filesOfPrintingRequest.map((item) => {
+            return {
+                fileId: item.id,
+                fileName: item.realName,
+                fileCoin: item.fileCoin,
+                fileSize: item.fileSize,
+                fileURL: `${envs.MINIO_URL}/${envs.MINIO_BUCKET_NAME}/${item.minioName}`,
+                numPage: item.numPage
+            };
         });
 
         return res.status(200).send(formatResult);
@@ -341,21 +378,45 @@ const removeFileInMinioAndDB = async (file: File) => {
     }
 };
 
-const deleteFilePrintingRequest: Handler<
-    DeleteFilePrintingRequestResultDto,
-    { Params: PrintingRequestInputDto; Body: DeleteFilePrintingRequestResultDto }
-> = async (req, res) => {
+const removeConfigInMinio = async (file: File) => {
     try {
-        const { fileId } = req.body;
-        const { printingRequestId } = req.params;
+        const fileExtension = file.minioName.split('.').pop();
+
+        if (!fileExtension) {
+            throw new Error('Invalid minioName in the file');
+        }
+
+        const configName = file.minioName.replace(`.${fileExtension}`, '.json');
+
+        const isConfigFileExist = await minio.isObjectExistInMinio(envs.MINIO_BUCKET_NAME, configName);
+
+        if (!isConfigFileExist) return;
+
+        await minio.removeFileFromMinio(configName);
+    } catch (error) {
+        logger.error(error);
+        throw new Error(`Unable to remove the config file for ${file.realName}`);
+    }
+};
+
+const deleteFilePrintingRequest: Handler<DeleteFilePrintingRequestResultDto, { Params: DeleteFilePrintingRequestResultDto }> = async (
+    req,
+    res
+) => {
+    try {
+        const { fileId } = req.params;
 
         const file = await prisma.file.findUnique({
             where: { id: fileId }
         });
 
-        if (!file || printingRequestId !== file.printingRequestId) throw new Error('Invalid file id or printing request id');
+        if (!file) throw new Error('Invalid file id');
+
+        const isFileExist = await minio.isObjectExistInMinio(envs.MINIO_BUCKET_NAME, file.minioName);
+        if (!isFileExist) res.notFound("File doesn't exist");
 
         await removeFileInMinioAndDB(file);
+        await removeConfigInMinio(file);
 
         return res.status(200).send(`Remove file ${file.realName} successfully`);
     } catch (err) {
