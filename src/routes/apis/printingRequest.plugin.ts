@@ -1,11 +1,19 @@
-import { DeleteFilePrintingRequestInputDto, FilePrintingRequestInputDto, PrintingRequestInputDto } from '@dtos/in';
+import {
+    DeleteFilePrintingRequestInputDto,
+    FilePrintingRequestInputDto,
+    PrintingRequestInputDto,
+    UploadConfigBodyDto,
+    UploadConfigParamsDto,
+    UploadFileParamsDto
+} from '@dtos/in';
 import {
     PrintingFileResultDto,
     GetPrintingRequestResultDto,
     UploadFileResultDto,
     CreatePrintingRequestResultDto,
     DeleteFilePrintingRequestResultDto,
-    AllFilesPrintingRequestResultDto
+    AllFilesPrintingRequestResultDto,
+    UploadConfigResultDto
 } from '@dtos/out';
 import { printingRequestHandler } from '@handlers';
 import { createRoutes } from '@utils';
@@ -37,16 +45,30 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
     },
     {
         method: 'POST',
-        url: '/upload',
+        url: '/:printingRequestId/upload-file',
         roles: ['*'],
         schema: {
             summary: 'Upload file to printing request',
-            consumes: ['multipart/form-data'],
+            params: UploadFileParamsDto,
             response: {
                 200: UploadFileResultDto
             }
         },
         handler: printingRequestHandler.uploadFileToPrintingRequest
+    },
+    {
+        method: 'POST',
+        url: '/upload-config/:fileId',
+        roles: ['*'],
+        schema: {
+            summary: 'Upload config to specific file',
+            params: UploadConfigParamsDto,
+            body: UploadConfigBodyDto,
+            response: {
+                200: UploadConfigResultDto
+            }
+        },
+        handler: printingRequestHandler.uploadConfigToPrintingRequest
     },
     {
         method: 'GET',
@@ -70,18 +92,18 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
             params: FilePrintingRequestInputDto,
             response: {
                 200: AllFilesPrintingRequestResultDto
-            }
+            },
+            deprecated: true
         },
         handler: printingRequestHandler.getAllFilesPrintingRequest
     },
     {
         method: 'DELETE',
         roles: ['*'],
-        url: '/:printingRequestId/file',
+        url: '/file/:fileId',
         schema: {
             summary: 'Delete the specific file of printing request',
-            params: PrintingRequestInputDto,
-            body: DeleteFilePrintingRequestInputDto,
+            params: DeleteFilePrintingRequestInputDto,
             response: {
                 200: DeleteFilePrintingRequestResultDto
             }

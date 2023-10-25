@@ -56,4 +56,14 @@ const getFileFromMinio = async (objectName: string): Promise<Buffer> => {
     }
 };
 
-export const minio = { uploadFileToMinio, getFileFromMinio, removeFileFromMinio };
+const isObjectExistInMinio = async (bucketName: string, objectName: string) => {
+    try {
+        await minioClient.statObject(bucketName, objectName);
+        return true;
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+};
+
+export const minio = { uploadFileToMinio, getFileFromMinio, removeFileFromMinio, isObjectExistInMinio };

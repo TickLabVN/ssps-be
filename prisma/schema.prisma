@@ -57,6 +57,18 @@ model File {
   minioName         String          @unique
   printingRequest   PrintingRequest @relation(fields: [printingRequestId], references: [id])
   printingRequestId String
+  numPage           Int             @default(0)
+  fileSize          Int             @default(0)
+  fileCoin          Int             @default(0)
+}
+
+model Configuration {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  value       String
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
 }
 
 enum PrintingStatus {

@@ -16,21 +16,21 @@ const SALT_ROUNDS = 10;
 const createUser = async () => {
     const users: { userName: string; password: string; roles: UserRole[]; name: string; email: string }[] = [
         {
-            userName: 'student',
+            userName: 'student@example.com',
             password: '123456789',
             roles: ['student'],
             name: 'Student name',
             email: 'student@example.com'
         },
         {
-            userName: 'ssps@gmail.com',
+            userName: 'ssps@example.com',
             password: '123456789',
             roles: ['admin'],
             name: 'Admin name',
             email: 'admin@example.com'
         },
         {
-            userName: 'root',
+            userName: 'root@example.com',
             password: '123456789',
             roles: ['admin', 'student'],
             name: 'Root name',
@@ -113,7 +113,7 @@ const createLocation = async () => {
 
 function getRandomElementFromArray<T>(arr: T[]): T | undefined {
     if (arr.length === 0) {
-        return undefined; // Return undefined if the array is empty
+        return undefined;
     }
 
     const randomIndex = Math.floor(Math.random() * arr.length);
@@ -202,6 +202,18 @@ const createPrintingRequest = async () => {
     console.log(samplePrintingRequest);
 };
 
+const createConfiguration = async () => {
+    const configuration: {
+        name: string;
+        value: string;
+        description: string;
+    } = { name: 'coin per page', value: '200', description: 'The amount of coin a student need to print one page' };
+
+    const sampleConfiguration = await prisma.configuration.create({ data: configuration });
+
+    console.log(sampleConfiguration);
+};
+
 async function generateSampleData() {
     await createUser();
 
@@ -210,6 +222,8 @@ async function generateSampleData() {
     await createLocation();
 
     await createPrintingRequest();
+
+    await createConfiguration();
 
     process.exit(0);
 }

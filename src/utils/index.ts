@@ -5,3 +5,4 @@
 export * from './createRoutes';
 export * from './logger';
 export * from './minio';
+export * from './uniqueHash';
