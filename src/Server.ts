@@ -7,18 +7,19 @@ import { checkRoles } from '@hooks';
 export function createServer(config: ServerConfig): FastifyInstance {
     const app = fastify({ logger: loggerConfig[envs.NODE_ENV], ajv: { plugins: [require('@fastify/multipart').ajvFilePlugin] } });
 
+    app.register(import('@fastify/cors'), {
+        origin: CORS_WHITE_LIST,
+        credentials: true
+    });
     app.register(import('@fastify/sensible'));
     app.register(import('@fastify/helmet'));
-    app.register(import('@fastify/cors'), {
-        origin: CORS_WHITE_LIST
-    });
 
     app.register(import('@fastify/cookie'), {
         secret: envs.COOKIE_SECRET, // for cookies signature
         hook: 'onRequest'
     } as FastifyCookieOptions);
 
-    app.register(import('@fastify/multipart'), { attachFieldsToBody: 'keyValues' });
+    app.register(import('@fastify/multipart'), { attachFieldsToBody: true });
 
     app.register(import('@fastify/swagger'), swaggerConfig);
     app.register(import('@fastify/swagger-ui'), swaggerUIConfig);
