@@ -3,6 +3,7 @@ import { Static, Type } from '@sinclair/typebox';
 
 export const GetPrintingRequestResultDto = Type.Array(
     Type.Object({
+        id: Type.String(),
         status: Type.String({ format: 'status' }),
         location: Type.String({ format: 'location' }),
         number: Type.Number({ format: 'number' }),

@@ -17,7 +17,7 @@ const login: Handler<AuthResultDto, { Body: AuthInputDto }> = async (req, res) =
             password: true,
             role: true
         },
-        where: { userName: req.body.userName }
+        where: { userName: req.body.email }
     });
     if (!user) return res.badRequest(USER_NOT_FOUND);
 
