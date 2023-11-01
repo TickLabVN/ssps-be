@@ -4,7 +4,6 @@
 
 export * from './PrintingRequest';
 export * from './auth';
-export * from './coin';
 export * from './constraints';
 export * from './cookie';
 export * from './crypt';

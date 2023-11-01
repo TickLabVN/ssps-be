@@ -1,5 +1,6 @@
 import { envs } from '@configs';
-import { MAX_INSERT_DB_RETRIES, DB_RETRY_DELAY_MS, DOLLAR_TO_COIN } from '@constants';
+import { MAX_INSERT_DB_RETRIES, DB_RETRY_DELAY_MS } from '@constants';
+import { DOLLAR_TO_COIN } from '@configs';
 import { CompletePayPalOrderDto, CreatePayPalOrderDto } from '@dtos/in';
 import { CompletePaypalDto, PaypalDto } from '@dtos/out';
 import { Handler } from '@interfaces';
@@ -22,7 +23,7 @@ const createPayPalOrder: Handler<PaypalDto, { Body: CreatePayPalOrderDto }> = as
                 {
                     item: {
                         name: 'coin',
-                        quantity: `${req.body.amount * DOLLAR_TO_COIN}`
+                        quantity: `${req.body.amount * (await DOLLAR_TO_COIN)}`
                     },
                     amount: {
                         currency_code: 'USD',
@@ -57,7 +58,7 @@ const completePayPalOrder: Handler<CompletePaypalDto, { Body: CompletePayPalOrde
         const amountMoney = Number(
             completeOrderResponse.purchase_units ? completeOrderResponse.purchase_units[0].payments.captures[0].amount.value : 0
         );
-        const numCoin = amountMoney * DOLLAR_TO_COIN;
+        const numCoin = amountMoney * (await DOLLAR_TO_COIN);
 
         if (completeOrderResponse.status === 'COMPLETED') {
             let retries = 0;

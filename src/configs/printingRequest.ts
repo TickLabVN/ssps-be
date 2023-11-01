@@ -17,7 +17,7 @@ export const COIN_PER_PAGE: Promise<number> = (async () => {
             select: { value: true },
             where: { name: 'coin per page' }
         });
-        const coinPerPage = Number(coinPerPageConfiguration?.value) || 200;
+        const coinPerPage = Number(coinPerPageConfiguration?.value) || 2;
 
         cache.set('coinPerPage', coinPerPage);
         return coinPerPage;

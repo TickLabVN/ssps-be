@@ -207,9 +207,12 @@ const createConfiguration = async () => {
         name: string;
         value: string;
         description: string;
-    } = { name: 'coin per page', value: '200', description: 'The amount of coin a student need to print one page' };
+    }[] = [
+        { name: 'coin per page', value: '2', description: 'The amount of coin a student need to print one page' },
+        { name: 'dollar to coin', value: '73', description: 'The amount of coin user get per dollar' }
+    ];
 
-    const sampleConfiguration = await prisma.configuration.create({ data: configuration });
+    const sampleConfiguration = await prisma.configuration.createMany({ data: configuration });
 
     console.log(sampleConfiguration);
 };
