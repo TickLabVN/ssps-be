@@ -80,6 +80,11 @@ jobs:
             echo MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }} >> .env
             echo MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }} >> .env
             echo MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }} >> .env
+            echo CHECKOUT_ENVIRONMENT=${{ vars.CHECKOUT_ENVIRONMENT }} >> .env
+            echo PAYPAL_LIVE_ENDPOINT=${{ vars.PAYPAL_LIVE_ENDPOINT }} >> .env
+            echo PAYPAL_SANDBOX_ENDPOINT=${{ vars.PAYPAL_SANDBOX_ENDPOINT }} >> .env
+            echo PAYPAL_CLIENT_ID=${{ secrets.PAYPAL_CLIENT_ID }} >> .env
+            echo PAYPAL_CLIENT_SECRET=${{ secrets.PAYPAL_CLIENT_SECRET }} >> .env
             curl -s ${{secrets.DOCKER_COMPOSE_RAW_FILE_URL}} -O -f
             docker compose stop ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
             docker compose down --volumes --remove-orphans

@@ -4,8 +4,10 @@
 
 export * from './PrintingRequest';
 export * from './auth';
+export * from './coin';
 export * from './constraints';
 export * from './cookie';
 export * from './crypt';
+export * from './db';
 export * from './errorMessages';
 export * from './user';

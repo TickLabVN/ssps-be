@@ -16,7 +16,13 @@ export const envs = cleanEnv(process.env, {
     MINIO_PORT: num(),
     MINIO_ACCESS_KEY: str(),
     MINIO_SECRET_KEY: str(),
-    MINIO_BUCKET_NAME: str()
+    MINIO_BUCKET_NAME: str(),
+    CHECKOUT_ENVIRONMENT: str(),
+    PAYPAL_LIVE_ENDPOINT: str(),
+    PAYPAL_SANDBOX_ENDPOINT: str(),
+    PAYPAL_CLIENT_ID: str(),
+    PAYPAL_CLIENT_SECRET: str()
 });
 
 export const CORS_WHITE_LIST = envs.CORS_WHITE_LIST.split(',');
+export const PAYPAL_ENDPOINT = envs.CHECKOUT_ENVIRONMENT === 'live' ? envs.PAYPAL_LIVE_ENDPOINT : envs.PAYPAL_SANDBOX_ENDPOINT;
