@@ -1,6 +1,6 @@
 import fastify, { FastifyInstance } from 'fastify';
 import type { FastifyCookieOptions } from '@fastify/cookie';
-import { CORS_WHITE_LIST, customErrorHandler, envs, loggerConfig, swaggerConfig, swaggerUIConfig } from '@configs';
+import { customErrorHandler, envs, loggerConfig, swaggerConfig, swaggerUIConfig } from '@configs';
 import { apiPlugin, authPlugin } from './routes';
 import { checkRoles } from '@hooks';
 
@@ -8,7 +8,9 @@ export function createServer(config: ServerConfig): FastifyInstance {
     const app = fastify({ logger: loggerConfig[envs.NODE_ENV], ajv: { plugins: [require('@fastify/multipart').ajvFilePlugin] } });
 
     app.register(import('@fastify/cors'), {
-        origin: CORS_WHITE_LIST,
+        // TODO: When come to production, change the logic of code to only set origin true on developer server
+        // origin: CORS_WHITE_LIST,
+        origin: true,
         credentials: true
     });
     app.register(import('@fastify/sensible'));
