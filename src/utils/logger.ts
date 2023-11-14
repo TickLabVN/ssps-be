@@ -1,4 +1,5 @@
-import { envs, loggerConfig } from '@configs';
+import { loggerConfig } from '@configs';
 import pino from 'pino';
 
-export const logger = pino(loggerConfig[envs.NODE_ENV]);
+//TODO: using envs
+export const logger = pino(loggerConfig['development']);

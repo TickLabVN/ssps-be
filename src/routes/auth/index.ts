@@ -28,5 +28,14 @@ export const authPlugin = createRoutes('Auth', [
             }
         },
         handler: authHandler.signup
+    },
+    {
+        method: 'POST',
+        url: '/google',
+        roles: ['*'],
+        schema: {
+            summary: 'Redirect URL of google auth'
+        },
+        handler: authHandler.googleOAuth
     }
 ]);

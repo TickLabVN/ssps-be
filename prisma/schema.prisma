@@ -13,11 +13,11 @@ datasource db {
 
 model User {
   id       String    @id @default(cuid())
-  userName String    @unique @map("userName") @db.VarChar(50)
-  password String
+  userName String?   @unique @map("userName") @db.VarChar(50)
+  password String?
   role     Int[]
   name     String
-  email    String
+  email    String    @unique
   Student  Student[]
 }
 
