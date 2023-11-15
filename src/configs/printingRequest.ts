@@ -3,8 +3,8 @@ import { prisma } from '@repositories';
 
 const cache = new NodeCache({ stdTTL: 300 });
 
-//TODO: Please remove it if do not plan to use it in the future.
-// export const PRINTING_CONFIGS = ['fileName', 'printingRequestId'];
+// //TODO: Please remove it if do not plan to use it in the future.
+// // export const PRINTING_CONFIGS = ['fileName', 'printingRequestId'];
 
 export const COIN_PER_PAGE: Promise<number> = (async () => {
     const cachedValue = cache.get('coinPerPage');

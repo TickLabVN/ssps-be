@@ -1,5 +1,5 @@
-import { minioClient } from '@repositories';
 import { envs } from '@configs';
+import { minioClient } from '@repositories';
 
 const uploadFileToMinio = async (objectName: string, fileBuffer: Buffer) => {
     const bucketExists = await minioClient.bucketExists(envs.MINIO_BUCKET_NAME);

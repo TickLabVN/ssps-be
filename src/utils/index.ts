@@ -3,6 +3,7 @@
  */
 
 export * from './createRoutes';
+export * from './googleOAuth';
 export * from './logger';
 export * from './minio';
 export * from './uniqueHash';

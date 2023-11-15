@@ -1,7 +1,8 @@
+import { envs } from '@configs';
+
 export const cookieOptions = {
     signed: false,
-    //TODO: using envs
-    secure: !!process.env.isProduction || false,
+    secure: envs.isProduction,
     path: '/',
     httpOnly: true
 };

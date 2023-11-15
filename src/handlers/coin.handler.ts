@@ -1,6 +1,5 @@
 import { envs } from '@configs';
 import { MAX_INSERT_DB_RETRIES, DB_RETRY_DELAY_MS } from '@constants';
-import { DOLLAR_TO_COIN } from '@configs';
 import { CompletePayPalOrderDto, CreatePayPalOrderDto } from '@dtos/in';
 import { CompletePaypalDto, PaypalDto } from '@dtos/out';
 import { Handler } from '@interfaces';
@@ -16,6 +15,11 @@ async function getPayPalAccessToken() {
 
 const createPayPalOrder: Handler<PaypalDto, { Body: CreatePayPalOrderDto }> = async (req, res) => {
     try {
+        const dollarToCoinConfiguration = await prisma.configuration.findFirst({
+            select: { value: true },
+            where: { name: 'coin per page' }
+        });
+        const dollarToCoin = Number(dollarToCoinConfiguration?.value) || 73;
         const accessToken = await getPayPalAccessToken();
         const orderDataJson = {
             intent: req.body.intent.toUpperCase(),
@@ -23,7 +27,7 @@ const createPayPalOrder: Handler<PaypalDto, { Body: CreatePayPalOrderDto }> = as
                 {
                     item: {
                         name: 'coin',
-                        quantity: `${req.body.amount * (await DOLLAR_TO_COIN)}`
+                        quantity: `${req.body.amount * dollarToCoin}`
                     },
                     amount: {
                         currency_code: 'USD',
@@ -49,6 +53,12 @@ const completePayPalOrder: Handler<CompletePaypalDto, { Body: CompletePayPalOrde
     try {
         const accessToken = await getPayPalAccessToken();
 
+        const dollarToCoinConfiguration = await prisma.configuration.findFirst({
+            select: { value: true },
+            where: { name: 'coin per page' }
+        });
+        const dollarToCoin = Number(dollarToCoinConfiguration?.value) || 73;
+
         const completeOrderResponse = await paypalService.completeOrder(
             `Bearer ${accessToken}`,
             req.body.orderId,
@@ -58,7 +68,7 @@ const completePayPalOrder: Handler<CompletePaypalDto, { Body: CompletePayPalOrde
         const amountMoney = Number(
             completeOrderResponse.purchase_units ? completeOrderResponse.purchase_units[0].payments.captures[0].amount.value : 0
         );
-        const numCoin = amountMoney * (await DOLLAR_TO_COIN);
+        const numCoin = amountMoney * dollarToCoin;
 
         if (completeOrderResponse.status === 'COMPLETED') {
             let retries = 0;

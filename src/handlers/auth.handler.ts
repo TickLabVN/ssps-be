@@ -1,5 +1,5 @@
 import { compare, hash } from 'bcrypt';
-import { getUserInfo, prisma } from '@repositories';
+import { prisma } from '@repositories';
 import { cookieOptions, DUPLICATED_userName, LOGIN_FAIL, SALT_ROUNDS, USER_NOT_FOUND, USER_ROLES } from '@constants';
 import jwt from 'jsonwebtoken';
 import { COIN_PER_SEM, envs } from '@configs';
@@ -7,7 +7,7 @@ import { User } from '@prisma/client';
 import { AuthInputDto, GoogleOAuthParamsDto, SignUpRequestDto } from '@dtos/in';
 import { AuthResultDto } from '@dtos/out';
 import { Handler } from '@interfaces';
-import { logger } from '@utils';
+import { getUserInfo, logger } from '@utils';
 import { UserRole } from 'src/types/auth';
 
 const login: Handler<AuthResultDto, { Body: AuthInputDto }> = async (req, res) => {
@@ -61,16 +61,18 @@ const signup: Handler<AuthResultDto, { Body: SignUpRequestDto }> = async (req, r
 };
 
 const createStudent = async (userData: { name: string; email: string; role: UserRole[] }) => {
-    const user = await prisma.user.create({
-        data: userData,
-        select: { id: true }
-    });
+    return prisma.$transaction(async (prisma) => {
+        const user = await prisma.user.create({
+            data: userData,
+            select: { id: true }
+        });
 
-    await prisma.student.create({
-        data: { default_coin_per_sem: await COIN_PER_SEM, remain_coin: await COIN_PER_SEM, id: user.id }
-    });
+        await prisma.student.create({
+            data: { default_coin_per_sem: await COIN_PER_SEM, remain_coin: await COIN_PER_SEM, id: user.id }
+        });
 
-    return user;
+        return user;
+    });
 };
 
 const googleOAuth: Handler<AuthResultDto, { Querystring: GoogleOAuthParamsDto }> = async (req, res) => {
@@ -98,7 +100,7 @@ const googleOAuth: Handler<AuthResultDto, { Querystring: GoogleOAuthParamsDto }>
             const userToken = jwt.sign({ userId: userId }, envs.JWT_SECRET);
             res.setCookie('token', userToken, cookieOptions);
 
-            return res.redirect(envs.UI_HOME_URL);
+            return res.redirect(envs.UI_HOME_URL).send({ id: userId });
         } else {
             res.status(400).send('User information not available.');
         }

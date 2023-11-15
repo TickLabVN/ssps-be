@@ -4,6 +4,7 @@
 
 export * from './auth.handler';
 export * from './coin.handler';
+export * from './errorHandler';
 export * from './home.handler';
 export * from './printingRequest.handler';
 export * from './user.handler';
