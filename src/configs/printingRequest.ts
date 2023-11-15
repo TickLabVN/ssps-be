@@ -1,11 +1,10 @@
 import NodeCache from 'node-cache';
 import { prisma } from '@repositories';
-import { logger } from '@utils';
 
 const cache = new NodeCache({ stdTTL: 300 });
 
-//TODO: Please remove it if do not plan to use it in the future.
-// export const PRINTING_CONFIGS = ['fileName', 'printingRequestId'];
+// //TODO: Please remove it if do not plan to use it in the future.
+// // export const PRINTING_CONFIGS = ['fileName', 'printingRequestId'];
 
 export const COIN_PER_PAGE: Promise<number> = (async () => {
     const cachedValue = cache.get('coinPerPage');
@@ -22,9 +21,27 @@ export const COIN_PER_PAGE: Promise<number> = (async () => {
         cache.set('coinPerPage', coinPerPage);
         return coinPerPage;
     } catch (error) {
-        logger.error('Failed to retrieve "coin per page" configuration:', error);
-        return 200;
+        throw new Error('Failed to retrieve "coin per page" configuration:', error);
     }
 })();
 
-export const ACCEPTED_EXTENSIONS = ['.doc', '.docx', '.xls', '.xlsx', '.ppt', '.jpg', '.png', '.pdf'];
+export const ACCEPTED_EXTENSIONS: Promise<string[]> = (async () => {
+    try {
+        const acceptedExtensionsConfiguration = await prisma.configuration.findFirst({
+            select: { value: true },
+            where: { name: 'accepted extensions' }
+        });
+
+        if (!acceptedExtensionsConfiguration) {
+            throw new Error('No "accepted extensions" configuration found.');
+        }
+
+        const serializedExtensions = acceptedExtensionsConfiguration.value;
+
+        const acceptedExtensions = JSON.parse(serializedExtensions);
+
+        return acceptedExtensions;
+    } catch (error) {
+        throw new Error('Failed to retrieve "accepted extensions" configuration:', error);
+    }
+})();

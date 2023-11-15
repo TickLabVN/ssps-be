@@ -1,8 +1,9 @@
 import fastify, { FastifyInstance } from 'fastify';
 import type { FastifyCookieOptions } from '@fastify/cookie';
-import { customErrorHandler, envs, loggerConfig, swaggerConfig, swaggerUIConfig } from '@configs';
+import { envs, loggerConfig, swaggerConfig, swaggerUIConfig } from '@configs';
 import { apiPlugin, authPlugin } from './routes';
 import { checkRoles } from '@hooks';
+import { customErrorHandler } from '@handlers';
 
 export function createServer(config: ServerConfig): FastifyInstance {
     const app = fastify({ logger: loggerConfig[envs.NODE_ENV], ajv: { plugins: [require('@fastify/multipart').ajvFilePlugin] } });

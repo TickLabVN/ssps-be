@@ -203,14 +203,20 @@ const createPrintingRequest = async () => {
 };
 
 const createConfiguration = async () => {
+    const acceptedExtensions = ['.pdf', 'png'];
     const configuration: {
         name: string;
         value: string;
         description: string;
     }[] = [
-        { name: 'coin per page', value: '2', description: 'The amount of coin a student need to print one page' },
-        { name: 'dollar to coin', value: '73', description: 'The amount of coin user get per dollar' }
+        { name: 'coin per page', value: '2', description: 'The amount of coin a student needs to print one page' },
+        { name: 'dollar to coin', value: '73', description: 'The amount of coin user gets per dollar' },
+        { name: 'coin per sem', value: '100', description: 'The amount of coin a student has free in one semester' }
     ];
+
+    const serializedExtensions = JSON.stringify(acceptedExtensions);
+
+    configuration.push({ name: 'accepted extensions', value: serializedExtensions, description: 'Supported file extensions of printer' });
 
     const sampleConfiguration = await prisma.configuration.createMany({ data: configuration });
 

@@ -66,6 +66,7 @@ jobs:
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
             
             mkdir -p $HOME/ssps-be && cd $HOME/ssps-be
+
             rm -f .env
             echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .env
             echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .env
@@ -85,12 +86,18 @@ jobs:
             echo PAYPAL_SANDBOX_ENDPOINT=${{ vars.PAYPAL_SANDBOX_ENDPOINT }} >> .env
             echo PAYPAL_CLIENT_ID=${{ secrets.PAYPAL_CLIENT_ID }} >> .env
             echo PAYPAL_CLIENT_SECRET=${{ secrets.PAYPAL_CLIENT_SECRET }} >> .env
+            echo GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} >> .env
+            echo GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} >> .env
+            echo GOOGLE_REDIRECT_URL=${{ secrets.GOOGLE_REDIRECT_URL }} >> .env
+            echo UI_HOME_URL=${{ secrets.UI_HOME_URL }} >> .env
+
             curl -s ${{secrets.DOCKER_COMPOSE_RAW_FILE_URL}} -O -f
             docker compose stop ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
             docker compose down --volumes --remove-orphans
             docker compose rm -f ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
             docker compose up -d ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
-            docker exec -it $(docker ps --filter "ancestor=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" -q) /bin/sh -c "npx prisma seed"
+
+            docker exec -it $(docker ps --filter "ancestor=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" -q) /bin/sh -c "npx prisma db seed"
             
             docker logout ${{ env.REGISTRY }}
             
