@@ -33,7 +33,8 @@ export const envs = cleanEnv(
         PAYPAL_CLIENT_SECRET: str(),
         GOOGLE_CLIENT_ID: str({ default: 'anc' }),
         GOOGLE_CLIENT_SECRET: str(),
-        GOOGLE_REDIRECT_URL: url()
+        GOOGLE_REDIRECT_URL: url(),
+        UI_HOME_URL: url()
     },
     {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

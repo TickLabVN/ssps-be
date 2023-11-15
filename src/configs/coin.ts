@@ -1,9 +1,6 @@
 import { prisma } from '@repositories';
 import { logger } from '@utils';
 
-//TODO: Please remove it if do not plan to use it in the future.
-// export const PRINTING_CONFIGS = ['fileName', 'printingRequestId'];
-
 export const DOLLAR_TO_COIN: Promise<number> = (async () => {
     try {
         const dollarToCoinConfiguration = await prisma.configuration.findFirst({

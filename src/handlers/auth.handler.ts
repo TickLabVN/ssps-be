@@ -2,7 +2,7 @@ import { compare, hash } from 'bcrypt';
 import { getUserInfo, prisma } from '@repositories';
 import { cookieOptions, DUPLICATED_userName, LOGIN_FAIL, SALT_ROUNDS, USER_NOT_FOUND, USER_ROLES } from '@constants';
 import jwt from 'jsonwebtoken';
-import { envs } from '@configs';
+import { COIN_PER_SEM, envs } from '@configs';
 import { User } from '@prisma/client';
 import { AuthInputDto, GoogleOAuthParamsDto, SignUpRequestDto } from '@dtos/in';
 import { AuthResultDto } from '@dtos/out';
@@ -60,16 +60,22 @@ const signup: Handler<AuthResultDto, { Body: SignUpRequestDto }> = async (req, r
     };
 };
 
-const createUser = async (userData: { name: string; email: string; role: UserRole[] }) => {
-    return prisma.user.create({
+const createStudent = async (userData: { name: string; email: string; role: UserRole[] }) => {
+    const user = await prisma.user.create({
         data: userData,
         select: { id: true }
     });
+
+    await prisma.student.create({
+        data: { default_coin_per_sem: await COIN_PER_SEM, remain_coin: await COIN_PER_SEM, id: user.id }
+    });
+
+    return user;
 };
 
-const googleOAuth: Handler<AuthResultDto, { Params: GoogleOAuthParamsDto }> = async (req, res) => {
+const googleOAuth: Handler<AuthResultDto, { Querystring: GoogleOAuthParamsDto }> = async (req, res) => {
     try {
-        const { userEmail, userName, isVerifiedEmail } = await getUserInfo(req.params.code);
+        const { userEmail, userName, isVerifiedEmail } = await getUserInfo(req.query.code);
 
         if (!isVerifiedEmail) {
             return res.status(406).send('Email needs to be verified for authentication.');
@@ -87,12 +93,12 @@ const googleOAuth: Handler<AuthResultDto, { Params: GoogleOAuthParamsDto }> = as
                 role: [USER_ROLES.student]
             };
 
-            const userId = user ? user.id : (await createUser(userData)).id;
+            const userId = user ? user.id : (await createStudent(userData)).id;
 
             const userToken = jwt.sign({ userId: userId }, envs.JWT_SECRET);
             res.setCookie('token', userToken, cookieOptions);
 
-            return { id: userId };
+            return res.redirect(envs.UI_HOME_URL);
         } else {
             res.status(400).send('User information not available.');
         }

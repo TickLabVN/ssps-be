@@ -30,7 +30,7 @@ export const authPlugin = createRoutes('Auth', [
         handler: authHandler.signup
     },
     {
-        method: 'POST',
+        method: 'GET',
         url: '/google',
         roles: ['*'],
         schema: {

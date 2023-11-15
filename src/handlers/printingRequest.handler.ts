@@ -173,6 +173,7 @@ const handleUploadingFile = async (printingRequestId: string, file: Buffer, file
             fileURL: `${envs.MINIO_URL}/${envs.MINIO_BUCKET_NAME}/${minioName}`
         };
     } catch (error) {
+        logger.error(error);
         throw new Error('File upload and database update failed');
     }
 };
@@ -233,8 +234,8 @@ const uploadFileToPrintingRequest: Handler<
             const maxFileSize = 100 * 1024 * 1024; // 100MB in bytes
 
             const fileExtension = file.filename.split('.').pop();
-            if (!fileExtension || !ACCEPTED_EXTENSIONS.includes(`.${fileExtension}`)) {
-                return { error: 'Invalid file format. Accepted formats: doc, docx, xls, xlsx, ppt, jpg, png, pdf' };
+            if (!fileExtension || !(await ACCEPTED_EXTENSIONS).includes(`.${fileExtension}`)) {
+                return { error: 'Invalid file format. Accepted formats: pdf, png' };
             }
 
             const fileBuffer = await file.toBuffer();

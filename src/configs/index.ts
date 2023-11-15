@@ -7,4 +7,5 @@ export * from './env';
 export * from './errorHandler';
 export * from './logger';
 export * from './printingRequest';
+export * from './student';
 export * from './swagger';
