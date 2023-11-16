@@ -12,10 +12,11 @@ import { Handler, Printer } from '@interfaces';
 import { PAID, PRINTING_STATUS } from '@constants';
 import { generateUniqueHashFileName, logger, minio } from '@utils';
 import { PrintingRequestInputDto, UploadConfigBodyDto, UploadConfigParamsDto, UploadFileParamsDto } from '@dtos/in';
-import { ACCEPTED_EXTENSIONS, COIN_PER_PAGE, envs } from '@configs';
+import { envs } from '@configs';
 import { File } from '@prisma/client';
 import { MultipartFile } from '@fastify/multipart';
 import pdf from 'pdf-parse';
+import { DBConfiguration } from '@handlers';
 
 const getAllPrintingRequest: Handler<GetPrintingRequestResultDto> = async (req) => {
     const userId = req.userId;
@@ -149,6 +150,8 @@ const updateFileAndStatusOfPrintingRequestToDb = async (
 const handleUploadingFile = async (printingRequestId: string, file: Buffer, fileName: string) => {
     const objectName = `${printingRequestId}/${generateUniqueHashFileName(fileName)}`;
 
+    const coinPerPage = await DBConfiguration.coinPerPage;
+
     try {
         const fileInformation = await prisma.$transaction(async () => {
             const numPage = await getNumpages(file);
@@ -156,7 +159,7 @@ const handleUploadingFile = async (printingRequestId: string, file: Buffer, file
             const fileMetadata = {
                 fileName: fileName,
                 minioName: objectName,
-                fileCoin: numPage * (await COIN_PER_PAGE),
+                fileCoin: numPage * coinPerPage,
                 fileSize: file.length,
                 numPage
             };
@@ -231,11 +234,13 @@ const uploadFileToPrintingRequest: Handler<
 > = async (req, res) => {
     const validateMultipartFile = async (file: MultipartFile) => {
         try {
-            const maxFileSize = 100 * 1024 * 1024; // 100MB in bytes
+            const maxFileSize = await DBConfiguration.maxFileSize;
+
+            const acceptedFileExtension = await DBConfiguration.acceptedExtensions;
 
             const fileExtension = file.filename.split('.').pop();
-            if (!fileExtension || !(await ACCEPTED_EXTENSIONS).includes(`.${fileExtension}`)) {
-                return { error: 'Invalid file format. Accepted formats: pdf, png' };
+            if (!fileExtension || !acceptedFileExtension.includes(`.${fileExtension}`)) {
+                return { error: `Invalid file format. Accepted formats: ${acceptedFileExtension}` };
             }
 
             const fileBuffer = await file.toBuffer();
@@ -249,6 +254,7 @@ const uploadFileToPrintingRequest: Handler<
             return { error: 'Error occurred while validating the file.' };
         }
     };
+
     try {
         const data = req.body.file;
 

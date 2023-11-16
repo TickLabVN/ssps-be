@@ -6,6 +6,7 @@ import { Handler } from '@interfaces';
 import { prisma } from '@repositories';
 import { paypalService } from '@services';
 import { logger } from '@utils';
+import { DBConfiguration } from './getConfigurationInDb.handler';
 
 async function getPayPalAccessToken() {
     const auth = `${envs.PAYPAL_CLIENT_ID}:${envs.PAYPAL_CLIENT_SECRET}`;
@@ -15,12 +16,10 @@ async function getPayPalAccessToken() {
 
 const createPayPalOrder: Handler<PaypalDto, { Body: CreatePayPalOrderDto }> = async (req, res) => {
     try {
-        const dollarToCoinConfiguration = await prisma.configuration.findFirst({
-            select: { value: true },
-            where: { name: 'coin per page' }
-        });
-        const dollarToCoin = Number(dollarToCoinConfiguration?.value) || 73;
         const accessToken = await getPayPalAccessToken();
+
+        const dollarToCoin = await DBConfiguration.dollarToCoin;
+
         const orderDataJson = {
             intent: req.body.intent.toUpperCase(),
             purchase_units: [
@@ -53,11 +52,7 @@ const completePayPalOrder: Handler<CompletePaypalDto, { Body: CompletePayPalOrde
     try {
         const accessToken = await getPayPalAccessToken();
 
-        const dollarToCoinConfiguration = await prisma.configuration.findFirst({
-            select: { value: true },
-            where: { name: 'coin per page' }
-        });
-        const dollarToCoin = Number(dollarToCoinConfiguration?.value) || 73;
+        const dollarToCoin = await DBConfiguration.dollarToCoin;
 
         const completeOrderResponse = await paypalService.completeOrder(
             `Bearer ${accessToken}`,
