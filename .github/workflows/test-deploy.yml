@@ -1,7 +1,7 @@
 on:
-  push:
-    branches:
-      - staging
+  pull_request:
+    types:
+        - opened
 
 permissions:
   contents: write
@@ -10,11 +10,10 @@ permissions:
 
 env:
   REGISTRY: ${{vars.REGISTRY_NAME}}
-  IMAGE_NAME: ticklabvn/ssps-be
+  IMAGE_NAME: ticklabvn/ssps-be-test-deploy
   CD_USERNAME: ${{github.actor}}
-  TEST_DEPLOY_IMAGE_NAME: ticklabvn/ssps-be-test-deploy
 
-name: Release and deploy
+name: Test releasing and deploying
 
 jobs:
   build:
@@ -51,7 +50,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build]
     env:
-      POSTGRES_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:${{secrets.POSTGRES_PORT}}/${{ secrets.POSTGRES_DB }}?schema=public
+      POSTGRES_URL: postgresql://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@postgres:${{secrets.POSTGRES_PORT_TEST_DEPLOY}}/${{ secrets.POSTGRES_DB }}?schema=public
+    if: github.event_name == 'pull_request' && github.event.action == 'opened' && github.event.pull_request.base.ref == 'staging'
     steps:
       - name: Deploy
         uses: appleboy/ssh-action@master
@@ -69,11 +69,11 @@ jobs:
             mkdir -p $HOME/${{env.IMAGE_NAME}} && cd $HOME/${{env.IMAGE_NAME}}
 
             rm -f .env
-            echo FASTIFY_PORT=${{ secrets.FASTIFY_PORT }} >> .env    
+            echo FASTIFY_PORT=${{ secrets.FASTIFY_PORT_TEST_DEPLOY }} >> .env
             echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .env
             echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .env
             echo POSTGRES_DB=${{ secrets.POSTGRES_DB }} >> .env
-            echo POSTGRES_PORT=${{ secrets.POSTGRES_PORT }} >> .env
+            echo POSTGRES_PORT=${{ secrets.POSTGRES_PORT_TEST_DEPLOY }} >> .env
             echo POSTGRES_URL=${{ env.POSTGRES_URL }} >> .env
             echo CORS_WHITE_LIST=${{ secrets.CORS_WHITE_LIST }} >> .env
             echo COOKIE_SECRET=${{ secrets.COOKIE_SECRET }} >> .env
@@ -94,13 +94,12 @@ jobs:
             echo GOOGLE_REDIRECT_URL=${{ secrets.GOOGLE_REDIRECT_URL }} >> .env
             echo UI_HOME_URL=${{ secrets.UI_HOME_URL }} >> .env
 
-            curl -s ${{secrets.DOCKER_COMPOSE_RAW_FILE_URL}} -O -f
-            docker compose stop ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
-            docker compose down --volumes --remove-orphans
-            docker compose rm -f ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
-            docker compose up -d ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
+            # curl -s ${{secrets.DOCKER_COMPOSE_RAW_FILE_URL}} -O -f
+            # docker compose stop ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
+            # docker compose down --volumes --remove-orphans
+            # docker compose rm -f ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
+            # docker compose up -d ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
 
             docker exec -it $(docker ps --filter "ancestor=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" -q) /bin/sh -c "npx prisma db seed"
             
             docker logout ${{ env.REGISTRY }}
-            
