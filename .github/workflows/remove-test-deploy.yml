@@ -8,6 +8,9 @@ permissions:
   pull-requests: write
   packages: write
 
+env: 
+  REGISTRY: ${{ vars.REGISTRY_NAME }}
+
 name: Remove test deploy
 
 jobs:
@@ -18,7 +21,7 @@ jobs:
     env:
       TEST_DEPLOY_IMAGE_NAME: ticklabvn/ssps-be-test-deploy
 
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.base.ref == 'staging'
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.base.ref == 'test/staging'
 
     steps:
       - name: remove
@@ -32,7 +35,7 @@ jobs:
             # Remove the test deploy container, image, and folder
             cd $HOME/${{ env.TEST_DEPLOY_IMAGE_NAME }}
             if [ $? -eq 0 ]; then
-              docker compose down --volumes --remove-orphans
+              docker compose -f docker-compose.test-deploy.yml down --volumes --remove-orphans
               docker image rm -f ${{ env.REGISTRY }}/${{ env.TEST_DEPLOY_IMAGE_NAME }}:latest
               rm -rf $HOME/${{ env.TEST_DEPLOY_IMAGE_NAME }}
             else
