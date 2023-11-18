@@ -10,6 +10,9 @@ permissions:
 
 name: Remove test deploy
 
+env: 
+  - REGISTRY: ${{vars.REGISTRY_NAME}}
+
 jobs:
   remove:
     name: Remove test deploying
@@ -18,7 +21,7 @@ jobs:
     env:
       TEST_DEPLOY_IMAGE_NAME: ticklabvn/ssps-be-test-deploy
 
-    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.base.ref == 'staging'
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.base.ref == 'test/staging'
 
     steps:
       - name: remove
