@@ -69,36 +69,48 @@ jobs:
             mkdir -p $HOME/${{env.IMAGE_NAME}} && cd $HOME/${{env.IMAGE_NAME}}
 
             rm -f .env
-            echo FASTIFY_PORT=${{ secrets.FASTIFY_PORT }} >> .env    
+            echo FASTIFY_PORT=${{ secrets.FASTIFY_PORT }} >> .env
+            echo FASTIFY_TEST_PORT=${{ secrets.FASTIFY_PORT_TEST_DEPLOY }} >> .env
+            echo >> .env            
+
             echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .env
             echo POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }} >> .env
             echo POSTGRES_DB=${{ secrets.POSTGRES_DB }} >> .env
             echo POSTGRES_PORT=${{ secrets.POSTGRES_PORT }} >> .env
+            echo POSTGRES_TEST_PORT=${{ secrets.POSTGRES_PORT_TEST_DEPLOY }} >> .env
             echo POSTGRES_URL=${{ env.POSTGRES_URL }} >> .env
+            echo >> .env   
+
             echo CORS_WHITE_LIST=${{ secrets.CORS_WHITE_LIST }} >> .env
             echo COOKIE_SECRET=${{ secrets.COOKIE_SECRET }} >> .env
             echo JWT_SECRET=${{ secrets.JWT_SECRET }} >> .env
+            echo >> .env   
+
             echo MINIO_URL=${{ secrets.MINIO_URL }} >> .env
             echo MINIO_SERVER_ENDPOINT=${{ secrets.MINIO_SERVER_ENDPOINT }} >> .env
             echo MINIO_PORT=${{ secrets.MINIO_PORT }} >> .env
             echo MINIO_ACCESS_KEY=${{ secrets.MINIO_ACCESS_KEY }} >> .env
             echo MINIO_SECRET_KEY=${{ secrets.MINIO_SECRET_KEY }} >> .env
             echo MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }} >> .env
+            echo >> .env   
+
             echo CHECKOUT_ENVIRONMENT=${{ vars.CHECKOUT_ENVIRONMENT }} >> .env
             echo PAYPAL_LIVE_ENDPOINT=${{ vars.PAYPAL_LIVE_ENDPOINT }} >> .env
             echo PAYPAL_SANDBOX_ENDPOINT=${{ vars.PAYPAL_SANDBOX_ENDPOINT }} >> .env
             echo PAYPAL_CLIENT_ID=${{ secrets.PAYPAL_CLIENT_ID }} >> .env
             echo PAYPAL_CLIENT_SECRET=${{ secrets.PAYPAL_CLIENT_SECRET }} >> .env
+            echo >> .env   
+
             echo GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} >> .env
             echo GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }} >> .env
             echo GOOGLE_REDIRECT_URL=${{ secrets.GOOGLE_REDIRECT_URL }} >> .env
             echo UI_HOME_URL=${{ secrets.UI_HOME_URL }} >> .env
-
-            curl -s ${{secrets.DOCKER_COMPOSE_RAW_FILE_URL}} -O -f
-            docker compose stop ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
-            docker compose down --volumes --remove-orphans
-            docker compose rm -f ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
-            docker compose up -d ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}} &&
+            echo >> .env  
+            
+            curl -s https://${{secrets.READ_FILE_ACCESS_TOKEN}}@raw.githubusercontent.com/${{github.repository}}/staging/docker-compose.yml -O -f
+            docker compose -f docker-compose.test-deploy.yml down --volumes --remove-orphans
+            docker compose -f docker-compose.test-deploy.yml up -d ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}} && 
+            docker exec -it ssps-be-test-deploy /bin/sh -c "npx prisma db seed"
 
             docker exec -it ssps-be /bin/sh -c "npx prisma db seed"
             
