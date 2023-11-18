@@ -2,24 +2,26 @@ version: "3.5"
 services:
   postgres:
     image: postgres:15
-    container_name: ssps-db
+    container_name: ssps-db-test-deploy
     env_file:
       - .env
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_TEST_PORT:-6432}:5432"
     volumes:
       - postgres_db:/var/lib/postgresql/data
     restart: always
     networks:
       - ssps
 
+  #docker build -t ssps-be:test-deploy .
   fastify:
-    image: ghcr.io/ticklabvn/ssps-be:latest
-    container_name: ssps-be
+    image: ghcr.io/ticklabvn/ssps-be-test-deploy:latest
+    #image: ssps-be-test-deploy:latest
+    container_name: ssps-be-test-deploy
     env_file:
       - .env
     ports:
-      - "${FASTIFY_PORT:-8080}:8080"
+      - "${FASTIFY_TEST_PORT:-9080}:8080"
     volumes:
       - .env:/app/.env
     depends_on:
@@ -33,10 +35,10 @@ volumes:
 
 networks:
   ssps:
-    name: ssps
+    name: ssps-test-deploy
     external: true
 
 # run the following command after docker compose up to create seed data:
 # docker-compose exec fastify npx prisma db seed
 # if the ssps network haven't created yet, run the following command:
-# docker network create --driver bridge ssps
+# docker network create --driver bridge ssps-test-deploy

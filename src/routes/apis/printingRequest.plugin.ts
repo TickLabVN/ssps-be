@@ -49,7 +49,15 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
         roles: ['*'],
         schema: {
             summary: 'Upload file to printing request',
+            consumes: ['multipart/form-data'],
             params: UploadFileParamsDto,
+            body: {
+                type: 'object',
+                required: ['file'],
+                properties: {
+                    file: { isFile: true }
+                }
+            },
             response: {
                 200: UploadFileResultDto
             }

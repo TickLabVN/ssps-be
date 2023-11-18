@@ -2,13 +2,14 @@ import { compare, hash } from 'bcrypt';
 import { prisma } from '@repositories';
 import { cookieOptions, DUPLICATED_userName, LOGIN_FAIL, SALT_ROUNDS, USER_NOT_FOUND, USER_ROLES } from '@constants';
 import jwt from 'jsonwebtoken';
-import { COIN_PER_SEM, envs } from '@configs';
+import { envs } from '@configs';
 import { User } from '@prisma/client';
 import { AuthInputDto, GoogleOAuthParamsDto, SignUpRequestDto } from '@dtos/in';
 import { AuthResultDto } from '@dtos/out';
 import { Handler } from '@interfaces';
 import { getUserInfo, logger } from '@utils';
 import { UserRole } from 'src/types/auth';
+import { DBConfiguration } from './getConfigurationInDb.handler';
 
 const login: Handler<AuthResultDto, { Body: AuthInputDto }> = async (req, res) => {
     const user = await prisma.user.findUnique({
@@ -61,6 +62,7 @@ const signup: Handler<AuthResultDto, { Body: SignUpRequestDto }> = async (req, r
 };
 
 const createStudent = async (userData: { name: string; email: string; role: UserRole[] }) => {
+    const coinPerSem = await DBConfiguration.coinPerSem();
     return prisma.$transaction(async (prisma) => {
         const user = await prisma.user.create({
             data: userData,
@@ -68,7 +70,7 @@ const createStudent = async (userData: { name: string; email: string; role: User
         });
 
         await prisma.student.create({
-            data: { default_coin_per_sem: await COIN_PER_SEM, remain_coin: await COIN_PER_SEM, id: user.id }
+            data: { default_coin_per_sem: coinPerSem, remain_coin: coinPerSem, id: user.id }
         });
 
         return user;

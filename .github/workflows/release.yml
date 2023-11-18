@@ -79,7 +79,7 @@ jobs:
             echo $CR_PAT | docker login ${{ env.REGISTRY }} -u ${{ env.CD_USERNAME }} --password-stdin
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
             
-            mkdir -p $HOME/ssps-be && cd $HOME/ssps-be
+            mkdir -p $HOME/${{env.IMAGE_NAME}} && cd $HOME/${{env.IMAGE_NAME}}
 
             rm -f .env
             echo POSTGRES_USER=${{ secrets.POSTGRES_USER }} >> .env
