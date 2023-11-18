@@ -8,6 +8,9 @@ permissions:
   pull-requests: write
   packages: write
 
+env: 
+  REGISTRY: ${{ vars.REGISTRY_NAME }}
+
 name: Remove test deploy
 
 jobs:
@@ -32,7 +35,7 @@ jobs:
             # Remove the test deploy container, image, and folder
             cd $HOME/${{ env.TEST_DEPLOY_IMAGE_NAME }}
             if [ $? -eq 0 ]; then
-              docker compose down --volumes --remove-orphans
+              docker compose -f docker-compose.test-deploy.yml down --volumes --remove-orphans
               docker image rm -f ${{ env.REGISTRY }}/${{ env.TEST_DEPLOY_IMAGE_NAME }}:latest
               rm -rf $HOME/${{ env.TEST_DEPLOY_IMAGE_NAME }}
             else
