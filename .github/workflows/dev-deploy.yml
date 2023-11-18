@@ -98,9 +98,9 @@ jobs:
             docker compose stop ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
             docker compose down --volumes --remove-orphans
             docker compose rm -f ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
-            docker compose up -d ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
+            docker compose up -d ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}} &&
 
-            docker exec -it $(docker ps --filter "ancestor=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" -q) /bin/sh -c "npx prisma db seed"
+            docker exec -it ssps-be /bin/sh -c "npx prisma db seed"
             
             docker logout ${{ env.REGISTRY }}
             

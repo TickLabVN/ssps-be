@@ -111,8 +111,7 @@ jobs:
 
             curl -s https://${{secrets.READ_FILE_ACCESS_TOKEN}}@raw.githubusercontent.com/${{github.repository}}/${{github.head_ref}}/docker-compose.test-deploy.yml -O -f
             docker compose -f docker-compose.test-deploy.yml down --volumes --remove-orphans
-            docker compose -f docker-compose.test-deploy.yml up -d ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}}
-
-            docker exec -it $(docker ps --filter "ancestor=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest" -q) /bin/sh -c "npx prisma db seed"
+            docker compose -f docker-compose.test-deploy.yml up -d ${{vars.DOCKER_COMPOSE_DEPLOY_SERVICE_NAME}} && 
+            docker exec -it ssps-be-test-deploy /bin/sh -c "npx prisma db seed"
             
             docker logout ${{ env.REGISTRY }}
