@@ -203,7 +203,7 @@ const createPrintingRequest = async () => {
 };
 
 const createConfiguration = async () => {
-    const acceptedExtensions = ['.pdf', 'png'];
+    const acceptedExtensions = ['pdf', 'png'];
     const configuration: {
         name: string;
         value: string;

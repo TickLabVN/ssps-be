@@ -11,10 +11,7 @@ import { logger } from '@utils';
 
 const cache = new NodeCache({ stdTTL: 300 });
 
-// //TODO: Please remove it if do not plan to use it in the future.
-// // export const PRINTING_CONFIGS = ['fileName', 'printingRequestId'];
-
-const coinPerPage: Promise<number> = (async () => {
+const coinPerPage: () => Promise<number> = async () => {
     const cachedValue = cache.get('coinPerPage');
     if (cachedValue) {
         return cachedValue as number;
@@ -36,9 +33,9 @@ const coinPerPage: Promise<number> = (async () => {
         logger.error(error);
         throw new Error('Failed to retrieve "coin per page" configuration:', error);
     }
-})();
+};
 
-const acceptedExtensions: Promise<string[]> = (async () => {
+const acceptedExtensions: () => Promise<string[]> = async () => {
     try {
         const acceptedExtensionsConfiguration = await prisma.configuration.findMany({
             select: { value: true },
@@ -52,15 +49,15 @@ const acceptedExtensions: Promise<string[]> = (async () => {
 
         const serializedExtensions = acceptedExtensionsConfiguration[0].value;
 
-        const acceptedExtensions = JSON.parse(serializedExtensions);
+        const acceptedExtensions = JSON.parse(serializedExtensions) as string[];
 
         return acceptedExtensions;
     } catch (error) {
         throw new Error('Failed to retrieve "accepted extensions" configuration:', error);
     }
-})();
+};
 
-const coinPerSem: Promise<number> = (async () => {
+const coinPerSem: () => Promise<number> = async () => {
     try {
         const coinPerSemConfiguration = await prisma.configuration.findMany({
             select: { value: true },
@@ -76,9 +73,9 @@ const coinPerSem: Promise<number> = (async () => {
     } catch (error) {
         throw new Error('Failed to retrieve "coin per sem" configuration:', error);
     }
-})();
+};
 
-const dollarToCoin: Promise<number> = (async () => {
+const dollarToCoin: () => Promise<number> = async () => {
     try {
         const dollarToCoinConfiguration = await prisma.configuration.findMany({
             select: { value: true },
@@ -94,9 +91,9 @@ const dollarToCoin: Promise<number> = (async () => {
     } catch (error) {
         throw new Error('Failed to retrieve "dollar to coin" configuration:', error);
     }
-})();
+};
 
-const maxFileSize: Promise<number> = (async () => {
+const maxFileSize: () => Promise<number> = async () => {
     try {
         const maxFileSizeConfiguration = await prisma.configuration.findMany({
             select: { value: true },
@@ -112,6 +109,6 @@ const maxFileSize: Promise<number> = (async () => {
     } catch (error) {
         throw new Error('Failed to retrieve "max file size" configuration:', error);
     }
-})();
+};
 
 export const DBConfiguration = { coinPerPage, acceptedExtensions, coinPerSem, dollarToCoin, maxFileSize };

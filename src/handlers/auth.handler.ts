@@ -62,7 +62,7 @@ const signup: Handler<AuthResultDto, { Body: SignUpRequestDto }> = async (req, r
 };
 
 const createStudent = async (userData: { name: string; email: string; role: UserRole[] }) => {
-    const coinPerSem = await DBConfiguration.coinPerSem;
+    const coinPerSem = await DBConfiguration.coinPerSem();
     return prisma.$transaction(async (prisma) => {
         const user = await prisma.user.create({
             data: userData,

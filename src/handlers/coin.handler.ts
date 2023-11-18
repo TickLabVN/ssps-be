@@ -18,7 +18,7 @@ const createPayPalOrder: Handler<PaypalDto, { Body: CreatePayPalOrderDto }> = as
     try {
         const accessToken = await getPayPalAccessToken();
 
-        const dollarToCoin = await DBConfiguration.dollarToCoin;
+        const dollarToCoin = await DBConfiguration.dollarToCoin();
 
         const orderDataJson = {
             intent: req.body.intent.toUpperCase(),
@@ -52,7 +52,7 @@ const completePayPalOrder: Handler<CompletePaypalDto, { Body: CompletePayPalOrde
     try {
         const accessToken = await getPayPalAccessToken();
 
-        const dollarToCoin = await DBConfiguration.dollarToCoin;
+        const dollarToCoin = await DBConfiguration.dollarToCoin();
 
         const completeOrderResponse = await paypalService.completeOrder(
             `Bearer ${accessToken}`,

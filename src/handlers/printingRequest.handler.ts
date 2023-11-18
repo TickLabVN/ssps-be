@@ -150,11 +150,12 @@ const updateFileAndStatusOfPrintingRequestToDb = async (
 const handleUploadingFile = async (printingRequestId: string, file: Buffer, fileName: string) => {
     const objectName = `${printingRequestId}/${generateUniqueHashFileName(fileName)}`;
 
-    const coinPerPage = await DBConfiguration.coinPerPage;
+    const coinPerPage = await DBConfiguration.coinPerPage();
 
     try {
         const fileInformation = await prisma.$transaction(async () => {
-            const numPage = await getNumpages(file);
+            const fileExtension = fileName.split('.').pop();
+            const numPage = fileExtension === 'pdf' ? await getNumpages(file) : 1;
 
             const fileMetadata = {
                 fileName: fileName,
@@ -234,12 +235,12 @@ const uploadFileToPrintingRequest: Handler<
 > = async (req, res) => {
     const validateMultipartFile = async (file: MultipartFile) => {
         try {
-            const maxFileSize = await DBConfiguration.maxFileSize;
+            const maxFileSize = await DBConfiguration.maxFileSize();
 
-            const acceptedFileExtension = await DBConfiguration.acceptedExtensions;
-
+            const acceptedFileExtension = await DBConfiguration.acceptedExtensions();
             const fileExtension = file.filename.split('.').pop();
-            if (!fileExtension || !acceptedFileExtension.includes(`.${fileExtension}`)) {
+
+            if (!fileExtension || !acceptedFileExtension.includes(`${fileExtension}`)) {
                 return { error: `Invalid file format. Accepted formats: ${acceptedFileExtension}` };
             }
 

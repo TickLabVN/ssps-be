@@ -23,7 +23,8 @@
     "clean:docker": "docker compose -f docker-compose.dev.yml down --volumes --remove-orphans",
     "clean:git": "git branch --merged >/tmp/merged-branches && nano /tmp/merged-branches && xargs git branch -D </tmp/merged-branches && git fetch --prune --all",
     "commit": "cz",
-    "commit:setup": "commitizen init cz-conventional-changelog --yarn --dev --exact"
+    "commit:setup": "commitizen init cz-conventional-changelog --yarn --dev --exact",
+    "docker:local-deploy": "docker build -t ssps-be-test-deploy:latest . && docker compose -f docker-compose.test-deploy.yml down --volumes --remove-orphans && docker compose -f docker-compose.test-deploy.yml up -d fastify"
   },
   "dependencies": {
     "@fastify/cookie": "^9.0.4",
