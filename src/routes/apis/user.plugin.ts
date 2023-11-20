@@ -16,7 +16,7 @@ export const userPlugin = createRoutes('User', [
     },
     {
         method: 'GET',
-        url: '/remain-coins',
+        url: '/remainCoins',
         roles: ['*'],
         schema: {
             description: 'get remain coin of current student',

@@ -6,6 +6,15 @@ import { createRoutes } from '@utils';
 
 export const authPlugin = createRoutes('Auth', [
     {
+        method: 'GET',
+        url: '/google',
+        roles: ['*'],
+        schema: {
+            summary: 'Redirect URL of google auth'
+        },
+        handler: authHandler.googleOAuth
+    },
+    {
         method: 'POST',
         url: '/login',
         roles: ['*'],
@@ -28,14 +37,5 @@ export const authPlugin = createRoutes('Auth', [
             }
         },
         handler: authHandler.signup
-    },
-    {
-        method: 'GET',
-        url: '/google',
-        roles: ['*'],
-        schema: {
-            summary: 'Redirect URL of google auth'
-        },
-        handler: authHandler.googleOAuth
     }
 ]);
