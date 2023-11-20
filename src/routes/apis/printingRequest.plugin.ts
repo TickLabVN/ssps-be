@@ -32,6 +32,33 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
         handler: printingRequestHandler.getAllPrintingRequest
     },
     {
+        method: 'GET',
+        roles: ['*'],
+        url: '/:printingRequestId/file/:fileId',
+        schema: {
+            summary: 'Get the specific files of printing request',
+            params: FilePrintingRequestInputDto,
+            response: {
+                200: AllFilesPrintingRequestResultDto
+            },
+            deprecated: true
+        },
+        handler: printingRequestHandler.getAllFilesPrintingRequest
+    },
+    {
+        method: 'GET',
+        roles: ['*'],
+        url: '/:printingRequestId/files',
+        schema: {
+            summary: 'Get all files of printing request',
+            params: PrintingRequestInputDto,
+            response: {
+                200: AllFilesPrintingRequestResultDto
+            }
+        },
+        handler: printingRequestHandler.getAllFilesPrintingRequest
+    },
+    {
         method: 'POST',
         url: '',
         roles: ['*'],
@@ -45,7 +72,34 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
     },
     {
         method: 'POST',
-        url: '/:printingRequestId/upload-file',
+        url: '/execute',
+        roles: ['*'],
+        schema: {
+            summary: 'Execute printing request',
+            body: PrintingRequestInputDto,
+            response: {
+                200: PrintingFileResultDto
+            }
+        },
+        handler: printingRequestHandler.executePrintingRequest
+    },
+    {
+        method: 'POST',
+        url: '/uploadConfig/:fileId',
+        roles: ['*'],
+        schema: {
+            summary: 'Upload config to specific file',
+            params: UploadConfigParamsDto,
+            body: UploadConfigBodyDto,
+            response: {
+                200: UploadConfigResultDto
+            }
+        },
+        handler: printingRequestHandler.uploadConfigToPrintingRequest
+    },
+    {
+        method: 'POST',
+        url: '/:printingRequestId/uploadFile',
         roles: ['*'],
         schema: {
             summary: 'Upload file to printing request',
@@ -65,47 +119,6 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
         handler: printingRequestHandler.uploadFileToPrintingRequest
     },
     {
-        method: 'POST',
-        url: '/upload-config/:fileId',
-        roles: ['*'],
-        schema: {
-            summary: 'Upload config to specific file',
-            params: UploadConfigParamsDto,
-            body: UploadConfigBodyDto,
-            response: {
-                200: UploadConfigResultDto
-            }
-        },
-        handler: printingRequestHandler.uploadConfigToPrintingRequest
-    },
-    {
-        method: 'GET',
-        roles: ['*'],
-        url: '/:printingRequestId/files',
-        schema: {
-            summary: 'Get all files of printing request',
-            params: PrintingRequestInputDto,
-            response: {
-                200: AllFilesPrintingRequestResultDto
-            }
-        },
-        handler: printingRequestHandler.getAllFilesPrintingRequest
-    },
-    {
-        method: 'GET',
-        roles: ['*'],
-        url: '/:printingRequestId/file/:fileId',
-        schema: {
-            summary: 'Get the specific files of printing request',
-            params: FilePrintingRequestInputDto,
-            response: {
-                200: AllFilesPrintingRequestResultDto
-            },
-            deprecated: true
-        },
-        handler: printingRequestHandler.getAllFilesPrintingRequest
-    },
-    {
         method: 'DELETE',
         roles: ['*'],
         url: '/file/:fileId',
@@ -117,18 +130,5 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
             }
         },
         handler: printingRequestHandler.deleteFilePrintingRequest
-    },
-    {
-        method: 'POST',
-        url: '/execute',
-        roles: ['*'],
-        schema: {
-            summary: 'Execute printing request',
-            body: PrintingRequestInputDto,
-            response: {
-                200: PrintingFileResultDto
-            }
-        },
-        handler: printingRequestHandler.executePrintingRequest
     }
 ]);

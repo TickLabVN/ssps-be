@@ -6,19 +6,6 @@ import { createRoutes } from '@utils';
 export const coinPlugin = createRoutes('Buy coin', [
     {
         method: 'POST',
-        url: '/paypal/creating',
-        roles: ['*'],
-        schema: {
-            summary: 'Create PayPal Order to buy more coin',
-            body: CreatePayPalOrderDto,
-            response: {
-                200: PaypalDto
-            }
-        },
-        handler: coinHandler.createPayPalOrder
-    },
-    {
-        method: 'POST',
         url: '/paypal/completing',
         roles: ['*'],
         schema: {
@@ -29,5 +16,18 @@ export const coinPlugin = createRoutes('Buy coin', [
             }
         },
         handler: coinHandler.completePayPalOrder
+    },
+    {
+        method: 'POST',
+        url: '/paypal/creating',
+        roles: ['*'],
+        schema: {
+            summary: 'Create PayPal Order to buy more coin',
+            body: CreatePayPalOrderDto,
+            response: {
+                200: PaypalDto
+            }
+        },
+        handler: coinHandler.createPayPalOrder
     }
 ]);

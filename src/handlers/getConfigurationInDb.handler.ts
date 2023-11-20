@@ -11,6 +11,23 @@ import { logger } from '@utils';
 
 const cache = new NodeCache({ stdTTL: 300 });
 
+const getAll: () => Promise<
+    {
+        name: string;
+        value: string;
+    }[]
+> = async () => {
+    try {
+        const configurations = await prisma.configuration.findMany({
+            select: { name: true, value: true }
+        });
+        return configurations;
+    } catch (error) {
+        logger.error('Failed to retrieve configurations:', error);
+        throw error;
+    }
+};
+
 const coinPerPage: () => Promise<number> = async () => {
     const cachedValue = cache.get('coinPerPage');
     if (cachedValue) {
@@ -111,4 +128,4 @@ const maxFileSize: () => Promise<number> = async () => {
     }
 };
 
-export const DBConfiguration = { coinPerPage, acceptedExtensions, coinPerSem, dollarToCoin, maxFileSize };
+export const DBConfiguration = { acceptedExtensions, coinPerPage, coinPerSem, dollarToCoin, getAll, maxFileSize };

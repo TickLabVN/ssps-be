@@ -13,6 +13,14 @@ export const AuthInputDto = Type.Object(
             {
                 email: 'student@example.com',
                 password: '123456789'
+            },
+            {
+                email: 'ssps@example.com',
+                password: '123456789'
+            },
+            {
+                email: 'root@example.com',
+                password: '123456789'
             }
         ]
     }
