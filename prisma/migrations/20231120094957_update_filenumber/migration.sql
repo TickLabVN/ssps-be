@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "File" ADD COLUMN     "fileNum" INTEGER NOT NULL DEFAULT 1;

@@ -1,5 +1,6 @@
 import {
     DeleteFilePrintingRequestInputDto,
+    FilePrintNumberChangeRequestBodyDto,
     FilePrintingRequestInputDto,
     PrintingRequestInputDto,
     UploadConfigBodyDto,
@@ -13,7 +14,9 @@ import {
     CreatePrintingRequestResultDto,
     DeleteFilePrintingRequestResultDto,
     AllFilesPrintingRequestResultDto,
-    UploadConfigResultDto
+    UploadConfigResultDto,
+    FilePrintNumberChangeRequestResultDto,
+    CancelPrintingRequestResultDto
 } from '@dtos/out';
 import { printingRequestHandler } from '@handlers';
 import { createRoutes } from '@utils';
@@ -117,6 +120,32 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
             }
         },
         handler: printingRequestHandler.uploadFileToPrintingRequest
+    },
+    {
+        method: 'PATCH',
+        url: '/printAmount',
+        roles: ['*'],
+        schema: {
+            summary: 'Change the amount of prints for multiple files',
+            body: FilePrintNumberChangeRequestBodyDto,
+            response: {
+                200: FilePrintNumberChangeRequestResultDto
+            }
+        },
+        handler: printingRequestHandler.filePrintNumberChangeRequest
+    },
+    {
+        method: 'PATCH',
+        url: '/:printingRequestId',
+        roles: ['*'],
+        schema: {
+            summary: 'Cancel printing request',
+            params: PrintingRequestInputDto,
+            response: {
+                200: CancelPrintingRequestResultDto
+            }
+        },
+        handler: printingRequestHandler.cancelPrintingRequest
     },
     {
         method: 'DELETE',

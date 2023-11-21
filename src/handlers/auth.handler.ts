@@ -1,6 +1,6 @@
 import { compare, hash } from 'bcrypt';
 import { prisma } from '@repositories';
-import { cookieOptions, DUPLICATED_userName, LOGIN_FAIL, SALT_ROUNDS, USER_NOT_FOUND, USER_ROLES } from '@constants';
+import { cookieOptions, LOGIN_FAIL, SALT_ROUNDS, USER_NOT_FOUND, USER_ROLES } from '@constants';
 import jwt from 'jsonwebtoken';
 import { envs } from '@configs';
 import { User } from '@prisma/client';
@@ -35,22 +35,57 @@ const login: Handler<AuthResultDto, { Body: AuthInputDto }> = async (req, res) =
     };
 };
 
+const validateNewUser = async (user: { email: string; password: string; userName: string; role: number[]; name: string }) => {
+    const existingUsername = await prisma.user.findFirst({ where: { userName: user.userName } });
+    if (existingUsername) {
+        return `Username '${user.userName}' is already taken. Please choose a different one.`;
+    }
+
+    const existingEmail = await prisma.user.findFirst({ where: { email: user.email } });
+    if (existingEmail) {
+        return `Email '${user.email}' is already associated with another account. Please use a different email.`;
+    }
+
+    const validRoleKeys = Object.values(USER_ROLES) as Array<number>;
+    const validRoles = user.role.every((roleId) => validRoleKeys.includes(roleId));
+
+    if (!validRoles) {
+        return `Invalid role(s) specified. Please use existing role(s).`;
+    }
+};
+
 const signup: Handler<AuthResultDto, { Body: SignUpRequestDto }> = async (req, res) => {
     const hashPassword = await hash(req.body.password, SALT_ROUNDS);
     let user: User;
     try {
-        user = await prisma.user.create({
-            data: {
-                userName: req.body.userName,
-                password: hashPassword,
-                name: req.body.name,
-                role: req.body.role,
-                email: req.body.email
-            }
+        const validationErrorMessage = await validateNewUser(req.body);
+        if (validationErrorMessage) {
+            return res.badRequest(validationErrorMessage);
+        }
+
+        const coinPerSem = await DBConfiguration.coinPerSem();
+
+        user = await prisma.$transaction(async (prisma) => {
+            const user = await prisma.user.create({
+                data: {
+                    userName: req.body.userName,
+                    password: hashPassword,
+                    name: req.body.name,
+                    role: req.body.role,
+                    email: req.body.email
+                }
+            });
+
+            if (user.role.includes(USER_ROLES.student))
+                await prisma.student.create({
+                    data: { default_coin_per_sem: coinPerSem, remain_coin: coinPerSem, id: user.id }
+                });
+
+            return user;
         });
     } catch (err) {
         logger.info(err);
-        return res.badRequest(DUPLICATED_userName);
+        return res.badRequest();
     }
 
     const userToken = jwt.sign({ userId: user.id }, envs.JWT_SECRET);
@@ -61,7 +96,7 @@ const signup: Handler<AuthResultDto, { Body: SignUpRequestDto }> = async (req, r
     };
 };
 
-const createStudent = async (userData: { name: string; email: string; role: UserRole[] }) => {
+const createStudent = async (userData: { name: string; email: string; role: UserRole[]; userName?: string; password?: string }) => {
     const coinPerSem = await DBConfiguration.coinPerSem();
     return prisma.$transaction(async (prisma) => {
         const user = await prisma.user.create({

@@ -1,5 +1,5 @@
 import { hashSync } from 'bcrypt';
-import { $Enums, PrismaClient, Student } from '@prisma/client';
+import { PrismaClient, Student } from '@prisma/client';
 
 const USER_ROLES = {
     admin: 5150,
@@ -58,7 +58,7 @@ const createUser = async () => {
 
 const createStudent = async () => {
     // Fetch the user ID for a student with the specified role
-    const studentUser = await prisma.user.findFirst({
+    const studentUser = await prisma.user.findMany({
         select: {
             id: true
         },
@@ -73,13 +73,13 @@ const createStudent = async () => {
         return;
     }
 
-    const students: Student[] = [
-        {
+    const students: Student[] = studentUser.map((user) => {
+        return {
             default_coin_per_sem: 100,
             remain_coin: 50,
-            id: studentUser.id // Use the extracted user ID
-        }
-    ];
+            id: user.id
+        };
+    });
 
     const sampleStudents = await prisma.student.createMany({
         data: students
@@ -111,96 +111,96 @@ const createLocation = async () => {
     console.log(sampleLocations);
 };
 
-function getRandomElementFromArray<T>(arr: T[]): T | undefined {
-    if (arr.length === 0) {
-        return undefined;
-    }
+// function getRandomElementFromArray<T>(arr: T[]): T | undefined {
+//     if (arr.length === 0) {
+//         return undefined;
+//     }
 
-    const randomIndex = Math.floor(Math.random() * arr.length);
-    return arr[randomIndex];
-}
+//     const randomIndex = Math.floor(Math.random() * arr.length);
+//     return arr[randomIndex];
+// }
 
-const createPrintingRequest = async () => {
-    const studentUser = await prisma.user.findFirst({
-        select: {
-            id: true
-        },
-        where: {
-            role: { has: USER_ROLES.student }
-        }
-    });
+// const createPrintingRequest = async () => {
+//     const studentUser = await prisma.user.findFirst({
+//         select: {
+//             id: true
+//         },
+//         where: {
+//             role: { has: USER_ROLES.student }
+//         }
+//     });
 
-    const locations = await prisma.location.findMany({
-        select: { id: true }
-    });
+//     const locations = await prisma.location.findMany({
+//         select: { id: true }
+//     });
 
-    if (!studentUser) {
-        console.error('No student user found with the specified role.');
-        return;
-    }
+//     if (!studentUser) {
+//         console.error('No student user found with the specified role.');
+//         return;
+//     }
 
-    const printingRequests: {
-        status: $Enums.PrintingStatus;
-        locationId: string | undefined;
-        number: number;
-        pageNumber: number;
-        coins: number;
-        paid: $Enums.Paid;
-        userId: string;
-    }[] = [
-        {
-            status: 'progressing',
-            locationId: getRandomElementFromArray(locations)?.id,
-            number: 2,
-            pageNumber: 10,
-            coins: 50,
-            paid: 'paid',
-            userId: studentUser.id
-        },
-        {
-            status: 'ready',
-            locationId: getRandomElementFromArray(locations)?.id,
-            number: 2,
-            pageNumber: 20,
-            coins: 75,
-            paid: 'paid',
-            userId: studentUser.id
-        },
-        {
-            status: 'done',
-            locationId: getRandomElementFromArray(locations)?.id,
-            number: 2,
-            pageNumber: 5,
-            coins: 30,
-            paid: 'not_paid',
-            userId: studentUser.id
-        },
-        {
-            status: 'canceled',
-            locationId: getRandomElementFromArray(locations)?.id,
-            number: 2,
-            pageNumber: 5,
-            coins: 30,
-            paid: 'not_paid',
-            userId: studentUser.id
-        },
-        {
-            status: 'done',
-            locationId: getRandomElementFromArray(locations)?.id,
-            number: 2,
-            pageNumber: 5,
-            coins: 30,
-            paid: 'paid',
-            userId: studentUser.id
-        }
-    ];
+//     const printingRequests: {
+//         status: $Enums.PrintingStatus;
+//         locationId: string | undefined;
+//         numFiles: number;
+//         numPages: number;
+//         coins: number;
+//         paid: $Enums.Paid;
+//         userId: string;
+//     }[] = [
+//         {
+//             status: 'progressing',
+//             locationId: getRandomElementFromArray(locations)?.id,
+//             numFiles: 0,
+//             numPages: 0,
+//             coins: 0,
+//             paid: 'not_paid',
+//             userId: studentUser.id
+//         },
+//         {
+//             status: 'ready',
+//             locationId: getRandomElementFromArray(locations)?.id,
+//             numFiles: 0,
+//             numPages: 0,
+//             coins: 0,
+//             paid: 'not_paid',
+//             userId: studentUser.id
+//         },
+//         {
+//             status: 'done',
+//             locationId: getRandomElementFromArray(locations)?.id,
+//             numFiles: 0,
+//             numPages: 0,
+//             coins: 0,
+//             paid: 'not_paid',
+//             userId: studentUser.id
+//         },
+//         {
+//             status: 'canceled',
+//             locationId: getRandomElementFromArray(locations)?.id,
+//             numFiles: 0,
+//             numPages: 0,
+//             coins: 0,
+//             paid: 'not_paid',
+//             userId: studentUser.id
+//         },
+//         {
+//             status: 'done',
+//             locationId: getRandomElementFromArray(locations)?.id,
+//             numFiles: 0,
+//             numPages: 0,
+//             coins: 0,
+//             paid: 'not_paid',
+//             userId: studentUser.id
+//         }
+//     ];
 
-    const samplePrintingRequest = await prisma.printingRequest.createMany({
-        data: printingRequests
-    });
+//     const samplePrintingRequest = await prisma.printingRequest.createMany({
+//         data: printingRequests
+//     });
 
-    console.log(samplePrintingRequest);
-};
+//     console.log(samplePrintingRequest);
+// };
 
 const createConfiguration = async () => {
     const acceptedExtensions = ['pdf', 'png'];
@@ -231,8 +231,6 @@ async function generateSampleData() {
     await createStudent();
 
     await createLocation();
-
-    await createPrintingRequest();
 
     await createConfiguration();
 
