@@ -142,8 +142,8 @@ const createPrintingRequest = async () => {
     const printingRequests: {
         status: $Enums.PrintingStatus;
         locationId: string | undefined;
-        number: number;
-        pageNumber: number;
+        numFiles: number;
+        numPages: number;
         coins: number;
         paid: $Enums.Paid;
         userId: string;
@@ -151,46 +151,46 @@ const createPrintingRequest = async () => {
         {
             status: 'progressing',
             locationId: getRandomElementFromArray(locations)?.id,
-            number: 2,
-            pageNumber: 10,
-            coins: 50,
-            paid: 'paid',
+            numFiles: 0,
+            numPages: 0,
+            coins: 0,
+            paid: 'not_paid',
             userId: studentUser.id
         },
         {
             status: 'ready',
             locationId: getRandomElementFromArray(locations)?.id,
-            number: 2,
-            pageNumber: 20,
-            coins: 75,
-            paid: 'paid',
+            numFiles: 0,
+            numPages: 0,
+            coins: 0,
+            paid: 'not_paid',
             userId: studentUser.id
         },
         {
             status: 'done',
             locationId: getRandomElementFromArray(locations)?.id,
-            number: 2,
-            pageNumber: 5,
-            coins: 30,
+            numFiles: 0,
+            numPages: 0,
+            coins: 0,
             paid: 'not_paid',
             userId: studentUser.id
         },
         {
             status: 'canceled',
             locationId: getRandomElementFromArray(locations)?.id,
-            number: 2,
-            pageNumber: 5,
-            coins: 30,
+            numFiles: 0,
+            numPages: 0,
+            coins: 0,
             paid: 'not_paid',
             userId: studentUser.id
         },
         {
             status: 'done',
             locationId: getRandomElementFromArray(locations)?.id,
-            number: 2,
-            pageNumber: 5,
-            coins: 30,
-            paid: 'paid',
+            numFiles: 0,
+            numPages: 0,
+            coins: 0,
+            paid: 'not_paid',
             userId: studentUser.id
         }
     ];

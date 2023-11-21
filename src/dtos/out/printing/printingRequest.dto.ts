@@ -6,9 +6,9 @@ export const GetPrintingRequestResultDto = Type.Array(
         id: Type.String(),
         status: Type.String({ format: 'status' }),
         location: Type.String({ format: 'location' }),
-        number: Type.Number({ format: 'number' }),
+        numFiles: Type.Number({ format: 'number' }),
         filesName: Type.Array(Type.String({ format: 'fileName' })),
-        pageNumber: Type.Number({ format: 'pageNumber' }),
+        numPages: Type.Number({ format: 'pageNumber' }),
         coins: Type.Number({ format: 'coins' }),
         paid: Type.String({ format: 'paid' })
     })

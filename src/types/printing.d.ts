@@ -1,3 +1,7 @@
 type PrintingConfigs = {
-    [x: string]: string;
+    numOfCopies: string;
+    layout: string;
+    pages: string;
+    pagesPerSheet: string;
+    pageSide: string;
 };

@@ -20,7 +20,13 @@ export const UploadConfigParamsDto = Type.Object({
     fileId: Type.String()
 });
 
-export const UploadConfigBodyDto = Type.Record(Type.String(), Type.String());
+export const UploadConfigBodyDto = Type.Object({
+    numOfCopies: Type.String(),
+    layout: Type.String(),
+    pages: Type.String(),
+    pagesPerSheet: Type.String(),
+    pageSide: Type.String()
+});
 
 export type UploadFileAndConfigInputDto = Static<typeof UploadFileAndConfigInputDto>;
 export type UploadFileParamsDto = Static<typeof UploadFileParamsDto>;

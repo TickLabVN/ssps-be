@@ -32,8 +32,8 @@ model Student {
 model PrintingRequest {
   id         String         @id @default(cuid())
   status     PrintingStatus @default(progressing)
-  number     Int            @default(0)
-  pageNumber Int            @default(0)
+  numFiles   Int            @default(0)
+  numPages   Int            @default(0)
   coins      Int            @default(0)
   paid       Paid           @default(not_paid)
   student    Student        @relation(fields: [userId], references: [id])
@@ -60,6 +60,7 @@ model File {
   numPage           Int             @default(0)
   fileSize          Int             @default(0)
   fileCoin          Int             @default(0)
+  fileNum           Int             @default(1)
 }
 
 model Configuration {
