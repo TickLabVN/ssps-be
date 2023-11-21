@@ -58,7 +58,7 @@ const createUser = async () => {
 
 const createStudent = async () => {
     // Fetch the user ID for a student with the specified role
-    const studentUser = await prisma.user.findFirst({
+    const studentUser = await prisma.user.findMany({
         select: {
             id: true
         },
@@ -73,13 +73,13 @@ const createStudent = async () => {
         return;
     }
 
-    const students: Student[] = [
-        {
+    const students: Student[] = studentUser.map((user) => {
+        return {
             default_coin_per_sem: 100,
             remain_coin: 50,
-            id: studentUser.id // Use the extracted user ID
-        }
-    ];
+            id: user.id
+        };
+    });
 
     const sampleStudents = await prisma.student.createMany({
         data: students

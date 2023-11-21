@@ -32,6 +32,7 @@ export const AllFilesPrintingRequestResultDto = Type.Array(
 export const DeleteFilePrintingRequestResultDto = Type.Object({
     status: Type.String(),
     fileId: Type.String(),
+    fileName: Type.String(),
     message: Type.String()
 });
 

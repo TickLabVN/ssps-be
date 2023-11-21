@@ -428,9 +428,14 @@ const deleteFilePrintingRequest: Handler<DeleteFilePrintingRequestResultDto, { P
         await removeFileInMinioAndDB(file);
         await removeConfigInMinio(file);
 
-        return res.status(200).send(`Remove file ${file.realName} successfully`);
+        return res.status(200).send({
+            status: 'success',
+            fileId: file.id,
+            fileName: file.realName,
+            message: `Remove file ${file.realName} successfully`
+        });
     } catch (err) {
-        logger.error(err.message);
+        logger.error(err);
         return res.status(500).send({ status: 'fail', message: err.message });
     }
 };
