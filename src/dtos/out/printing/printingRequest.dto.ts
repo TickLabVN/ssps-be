@@ -25,7 +25,8 @@ export const AllFilesPrintingRequestResultDto = Type.Array(
         numPage: Type.Number(),
         fileURL: Type.String(),
         fileSize: Type.Number(),
-        fileCoin: Type.Number()
+        fileCoin: Type.Number(),
+        numOfCopies: Type.Number()
     })
 );
 

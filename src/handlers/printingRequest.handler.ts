@@ -4,6 +4,7 @@ import {
     CancelPrintingRequestResultDto,
     CreatePrintingRequestResultDto,
     DeleteFilePrintingRequestResultDto,
+    FilePrintNumberChangeRequestResultDto,
     GetPrintingRequestResultDto,
     PrintingFileResultDto,
     UploadConfigResultDto,
@@ -12,7 +13,13 @@ import {
 import { Handler, Printer } from '@interfaces';
 import { PAID, PRINTING_STATUS } from '@constants';
 import { generateUniqueHashFileName, logger, minio } from '@utils';
-import { PrintingRequestInputDto, UploadConfigBodyDto, UploadConfigParamsDto, UploadFileParamsDto } from '@dtos/in';
+import {
+    FilePrintNumberChangeRequestBodyDto,
+    PrintingRequestInputDto,
+    UploadConfigBodyDto,
+    UploadConfigParamsDto,
+    UploadFileParamsDto
+} from '@dtos/in';
 import { envs } from '@configs';
 import { File } from '@prisma/client';
 import { MultipartFile } from '@fastify/multipart';
@@ -201,7 +208,6 @@ const handleUploadingConfig = async (fileId: string, config: PrintingConfigs) =>
                 fileNum: Number(config.numOfCopies)
             }
         });
-        fasjdf;askjf;lks
 
         const configName = file.minioName.replace(`.${fileExtension}`, '.json');
         await removeConfigInMinio(file);
@@ -336,7 +342,8 @@ const getFilesOfPrintingRequest = async (printingRequestId: string) => {
             realName: true,
             fileCoin: true,
             fileSize: true,
-            numPage: true
+            numPage: true,
+            fileNum: true
         }
     });
     return files;
@@ -370,7 +377,8 @@ const getAllFilesPrintingRequest: Handler<AllFilesPrintingRequestResultDto, { Pa
                 fileCoin: item.fileCoin,
                 fileSize: item.fileSize,
                 fileURL: `${envs.MINIO_URL}/${envs.MINIO_BUCKET_NAME}/${item.minioName}`,
-                numPage: item.numPage
+                numPage: item.numPage,
+                numOfCopies: item.fileNum
             };
         });
 
@@ -488,6 +496,64 @@ const cancelPrintingRequest: Handler<CancelPrintingRequestResultDto, { Params: P
     }
 };
 
+const updateFilePrintNumberMinio = async (file: File, numOfCopies: number) => {
+    const fileExtension = file.minioName.split('.').pop();
+    const configName = file.minioName.replace(`.${fileExtension}`, '.json');
+
+    const configBuffer = await minio.getFileFromMinio(configName);
+
+    const configString = configBuffer.toString('utf-8');
+
+    const config: PrintingConfigs = JSON.parse(configString);
+
+    const newConfig = {
+        numOfCopies: numOfCopies,
+        layout: config.layout,
+        pages: config.pages,
+        pagesPerSheet: config.pagesPerSheet,
+        pageSide: config.pageSide
+    };
+
+    await handleUploadingConfig(file.id, newConfig);
+};
+
+const filePrintNumberChangeRequest: Handler<FilePrintNumberChangeRequestResultDto, { Body: FilePrintNumberChangeRequestBodyDto }> = async (
+    req,
+    res
+) => {
+    try {
+        req.body.forEach(async ({ fileId, numOfCopies }) => {
+            const file = await prisma.file.findUnique({
+                where: { id: fileId }
+            });
+
+            if (!file) throw new Error('Invalid file id');
+
+            const isFileExist = await minio.isObjectExistInMinio(envs.MINIO_BUCKET_NAME, file.minioName);
+            if (!isFileExist) res.notFound("File doesn't exist");
+
+            await prisma.$transaction(async () => {
+                await updateFilePrintNumberMinio(file, numOfCopies);
+
+                await prisma.file.update({
+                    where: { id: file.id },
+                    data: { fileNum: numOfCopies }
+                });
+            });
+        });
+
+        return res.status(200).send({
+            status: 'success'
+        });
+    } catch (err) {
+        logger.error(err);
+        return res.status(500).send({
+            status: 'fail',
+            message: 'Internal server error'
+        });
+    }
+};
+
 export const printingRequestHandler = {
     getAllPrintingRequest,
     createPrintingRequest,
@@ -496,5 +562,6 @@ export const printingRequestHandler = {
     getAllFilesPrintingRequest,
     deleteFilePrintingRequest,
     executePrintingRequest,
-    cancelPrintingRequest
+    cancelPrintingRequest,
+    filePrintNumberChangeRequest
 };
