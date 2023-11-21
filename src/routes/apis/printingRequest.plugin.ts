@@ -13,7 +13,8 @@ import {
     CreatePrintingRequestResultDto,
     DeleteFilePrintingRequestResultDto,
     AllFilesPrintingRequestResultDto,
-    UploadConfigResultDto
+    UploadConfigResultDto,
+    CancelPrintingRequestResultDto
 } from '@dtos/out';
 import { printingRequestHandler } from '@handlers';
 import { createRoutes } from '@utils';
@@ -117,6 +118,19 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
             }
         },
         handler: printingRequestHandler.uploadFileToPrintingRequest
+    },
+    {
+        method: 'PATCH',
+        url: '/:printingRequestId',
+        roles: ['*'],
+        schema: {
+            summary: 'Cancel printing request',
+            params: PrintingRequestInputDto,
+            response: {
+                200: CancelPrintingRequestResultDto
+            }
+        },
+        handler: printingRequestHandler.cancelPrintingRequest
     },
     {
         method: 'DELETE',

@@ -1,5 +1,5 @@
 type PrintingConfigs = {
-    numOfCopies: string;
+    numOfCopies: number;
     layout: string;
     pages: string;
     pagesPerSheet: string;

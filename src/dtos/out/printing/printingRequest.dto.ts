@@ -22,7 +22,7 @@ export const AllFilesPrintingRequestResultDto = Type.Array(
     Type.Object({
         fileId: Type.String(),
         fileName: Type.String(),
-        numPage: Type.String(),
+        numPage: Type.Number(),
         fileURL: Type.String(),
         fileSize: Type.Number(),
         fileCoin: Type.Number()
@@ -40,6 +40,10 @@ export const ExecutePrintingRequestResultDto = Type.Object({
     PrintingStatus: Type.Enum(PRINTING_STATUS)
 });
 
+export const CancelPrintingRequestResultDto = Type.Object({
+    printingStatus: Type.Enum(PRINTING_STATUS)
+});
+
 export type GetPrintingRequestResultDto = Static<typeof GetPrintingRequestResultDto>;
 
 export type CreatePrintingRequestResultDto = Static<typeof CreatePrintingRequestResultDto>;
@@ -49,3 +53,5 @@ export type AllFilesPrintingRequestResultDto = Static<typeof AllFilesPrintingReq
 export type DeleteFilePrintingRequestResultDto = Static<typeof DeleteFilePrintingRequestResultDto>;
 
 export type ExecutePrintingRequestResultDto = Static<typeof ExecutePrintingRequestResultDto>;
+
+export type CancelPrintingRequestResultDto = Static<typeof CancelPrintingRequestResultDto>;

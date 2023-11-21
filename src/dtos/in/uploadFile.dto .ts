@@ -21,7 +21,7 @@ export const UploadConfigParamsDto = Type.Object({
 });
 
 export const UploadConfigBodyDto = Type.Object({
-    numOfCopies: Type.String(),
+    numOfCopies: Type.Number(),
     layout: Type.String(),
     pages: Type.String(),
     pagesPerSheet: Type.String(),

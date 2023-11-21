@@ -1,6 +1,7 @@
 import { nodePrinter, prisma } from '@repositories';
 import {
     AllFilesPrintingRequestResultDto,
+    CancelPrintingRequestResultDto,
     CreatePrintingRequestResultDto,
     DeleteFilePrintingRequestResultDto,
     GetPrintingRequestResultDto,
@@ -178,10 +179,6 @@ const handleUploadingConfig = async (fileId: string, config: PrintingConfigs) =>
         const file = await prisma.file.findUnique({
             where: {
                 id: fileId
-            },
-            select: {
-                minioName: true,
-                id: true
             }
         });
 
@@ -196,7 +193,18 @@ const handleUploadingConfig = async (fileId: string, config: PrintingConfigs) =>
             throw new Error('Invalid minioName in the file');
         }
 
+        await prisma.file.update({
+            where: {
+                id: fileId
+            },
+            data: {
+                fileNum: Number(config.numOfCopies)
+            }
+        });
+        fasjdf;askjf;lks
+
         const configName = file.minioName.replace(`.${fileExtension}`, '.json');
+        await removeConfigInMinio(file);
 
         await minio.uploadFileToMinio(configName, configBuffer);
 
@@ -440,6 +448,46 @@ const deleteFilePrintingRequest: Handler<DeleteFilePrintingRequestResultDto, { P
     }
 };
 
+const cancelPrintingRequest: Handler<CancelPrintingRequestResultDto, { Params: PrintingRequestInputDto }> = async (req, res) => {
+    try {
+        const printingRequest = await prisma.printingRequest.findUnique({
+            where: {
+                id: req.params.printingRequestId
+            }
+        });
+
+        if (!printingRequest) {
+            return res.status(404).send({
+                error: 'Printing request not found'
+            });
+        }
+
+        if (printingRequest.status === PRINTING_STATUS.ready) {
+            return res.status(400).send({
+                error: 'Cannot cancel a printing request that is ready'
+            });
+        }
+
+        await prisma.printingRequest.update({
+            where: {
+                id: req.params.printingRequestId
+            },
+            data: {
+                status: PRINTING_STATUS.canceled
+            }
+        });
+
+        return res.status(200).send({
+            printingStatus: PRINTING_STATUS.canceled
+        });
+    } catch (err) {
+        logger.error(err);
+        return res.status(500).send({
+            error: 'Internal server error'
+        });
+    }
+};
+
 export const printingRequestHandler = {
     getAllPrintingRequest,
     createPrintingRequest,
@@ -447,5 +495,6 @@ export const printingRequestHandler = {
     uploadConfigToPrintingRequest,
     getAllFilesPrintingRequest,
     deleteFilePrintingRequest,
-    executePrintingRequest
+    executePrintingRequest,
+    cancelPrintingRequest
 };
