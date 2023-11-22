@@ -325,7 +325,7 @@ const uploadConfigToPrintingRequest: Handler<UploadConfigResultDto, { Params: Up
 
 const printFileFromBuffer = async (printer: Printer, fileBuffer: Buffer) => {
     try {
-        await printer.print(fileBuffer);
+        await printer.print(fileBuffer, 'AUTO', 'PDF');
     } catch (err) {
         throw err;
     }
@@ -428,7 +428,6 @@ const deleteFilePrintingRequest: Handler<DeleteFilePrintingRequestResultDto, { P
     req,
     res
 ) => {
-    //TODO: also update printing request of removing file
     try {
         const { fileId } = req.params;
 
