@@ -10,7 +10,10 @@ export const authPlugin = createRoutes('Auth', [
         url: '/google',
         roles: ['*'],
         schema: {
-            summary: 'Redirect URL of google auth'
+            summary: 'Redirect URL of google auth',
+            response: {
+                200: AuthResultDto
+            }
         },
         handler: authHandler.googleOAuth
     },

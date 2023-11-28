@@ -139,7 +139,7 @@ const googleOAuth: Handler<AuthResultDto, { Querystring: GoogleOAuthParamsDto }>
 
             return res.redirect(envs.UI_HOME_URL).send({ id: userId });
         } else {
-            res.status(400).send('User information not available.');
+            return res.status(400).send('User information not available.');
         }
     } catch (error) {
         console.error('Error processing user information:', error);
