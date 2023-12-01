@@ -28,7 +28,12 @@ export const UploadConfigBodyDto = Type.Object({
     pageSide: Type.String()
 });
 
-export const FilePrintNumberChangeRequestBodyDto = Type.Array(
+export const FilePrintAmountChangeRequestBodyDto = Type.Object({
+    fileId: Type.String(),
+    numOfCopies: Type.Integer()
+});
+
+export const MultiFilePrintAmountChangeRequestBodyDto = Type.Array(
     Type.Object({
         fileId: Type.String(),
         numOfCopies: Type.Integer()
@@ -39,4 +44,5 @@ export type UploadFileAndConfigInputDto = Static<typeof UploadFileAndConfigInput
 export type UploadFileParamsDto = Static<typeof UploadFileParamsDto>;
 export type UploadConfigParamsDto = Static<typeof UploadConfigParamsDto>;
 export type UploadConfigBodyDto = Static<typeof UploadConfigBodyDto>;
-export type FilePrintNumberChangeRequestBodyDto = Static<typeof FilePrintNumberChangeRequestBodyDto>;
+export type FilePrintAmountChangeRequestBodyDto = Static<typeof FilePrintAmountChangeRequestBodyDto>;
+export type MultiFilePrintAmountChangeRequestBodyDto = Static<typeof MultiFilePrintAmountChangeRequestBodyDto>;

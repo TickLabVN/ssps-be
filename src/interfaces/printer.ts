@@ -1,3 +1,5 @@
 export interface Printer {
-    print(buffer: Buffer): Promise<string>;
+    getSupportedPrintFormats(): string[];
+    getPrinterDriverOptions(printerName: string): unknown;
+    print(buffer: Buffer, fileType: string, printerName?: string): Promise<string>;
 }
