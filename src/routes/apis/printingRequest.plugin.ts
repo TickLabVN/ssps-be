@@ -1,7 +1,8 @@
 import {
     DeleteFilePrintingRequestInputDto,
-    FilePrintNumberChangeRequestBodyDto,
+    FilePrintAmountChangeRequestBodyDto,
     FilePrintingRequestInputDto,
+    MultiFilePrintAmountChangeRequestBodyDto,
     PrintingRequestInputDto,
     UploadConfigBodyDto,
     UploadConfigParamsDto,
@@ -123,11 +124,25 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
     },
     {
         method: 'PATCH',
-        url: '/printAmount',
+        url: '/printAmounts',
         roles: ['*'],
         schema: {
             summary: 'Change the amount of prints for multiple files',
-            body: FilePrintNumberChangeRequestBodyDto,
+            body: MultiFilePrintAmountChangeRequestBodyDto,
+            response: {
+                200: FilePrintNumberChangeRequestResultDto
+            },
+            deprecated: true
+        },
+        handler: printingRequestHandler.mutilFilePrintNumberChangeRequest
+    },
+    {
+        method: 'PATCH',
+        url: '/printAmount',
+        roles: ['*'],
+        schema: {
+            summary: 'Change the amount of prints for single files',
+            body: FilePrintAmountChangeRequestBodyDto,
             response: {
                 200: FilePrintNumberChangeRequestResultDto
             }

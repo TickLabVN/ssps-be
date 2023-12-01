@@ -14,7 +14,8 @@ import { Handler, Printer } from '@interfaces';
 import { PAID, PRINTING_STATUS } from '@constants';
 import { generateUniqueHashFileName, logger, minio } from '@utils';
 import {
-    FilePrintNumberChangeRequestBodyDto,
+    FilePrintAmountChangeRequestBodyDto,
+    MultiFilePrintAmountChangeRequestBodyDto,
     PrintingRequestInputDto,
     UploadConfigBodyDto,
     UploadConfigParamsDto,
@@ -356,6 +357,7 @@ const executePrintingRequest: Handler<PrintingFileResultDto, { Body: PrintingReq
         filesOfPrintingRequest.forEach(async (file) => {
             const buffer = await minio.getFileFromMinio(file.minioName);
 
+            //TODO: number of copies
             await printFileFromBuffer(nodePrinter, buffer);
         });
 
@@ -516,10 +518,10 @@ const updateFilePrintNumberMinio = async (file: File, numOfCopies: number) => {
     await handleUploadingConfig(file.id, newConfig);
 };
 
-const filePrintNumberChangeRequest: Handler<FilePrintNumberChangeRequestResultDto, { Body: FilePrintNumberChangeRequestBodyDto }> = async (
-    req,
-    res
-) => {
+const mutilFilePrintNumberChangeRequest: Handler<
+    FilePrintNumberChangeRequestResultDto,
+    { Body: MultiFilePrintAmountChangeRequestBodyDto }
+> = async (req, res) => {
     try {
         req.body.forEach(async ({ fileId, numOfCopies }) => {
             const file = await prisma.file.findUnique({
@@ -553,6 +555,43 @@ const filePrintNumberChangeRequest: Handler<FilePrintNumberChangeRequestResultDt
     }
 };
 
+const filePrintNumberChangeRequest: Handler<FilePrintNumberChangeRequestResultDto, { Body: FilePrintAmountChangeRequestBodyDto }> = async (
+    req,
+    res
+) => {
+    try {
+        const { fileId, numOfCopies } = req.body;
+
+        const file = await prisma.file.findUnique({
+            where: { id: fileId }
+        });
+
+        if (!file) throw new Error('Invalid file id');
+
+        const isFileExist = await minio.isObjectExistInMinio(envs.MINIO_BUCKET_NAME, file.minioName);
+        if (!isFileExist) res.notFound("File doesn't exist");
+
+        await prisma.$transaction(async () => {
+            await updateFilePrintNumberMinio(file, numOfCopies);
+
+            await prisma.file.update({
+                where: { id: file.id },
+                data: { fileNum: numOfCopies }
+            });
+        });
+
+        return res.status(200).send({
+            status: 'success'
+        });
+    } catch (err) {
+        logger.error(err);
+        return res.status(500).send({
+            status: 'fail',
+            message: 'Internal server error'
+        });
+    }
+};
+
 export const printingRequestHandler = {
     getAllPrintingRequest,
     createPrintingRequest,
@@ -562,5 +601,6 @@ export const printingRequestHandler = {
     deleteFilePrintingRequest,
     executePrintingRequest,
     cancelPrintingRequest,
+    mutilFilePrintNumberChangeRequest,
     filePrintNumberChangeRequest
 };
