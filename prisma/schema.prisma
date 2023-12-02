@@ -84,11 +84,3 @@ enum Paid {
   paid
   not_paid
 }
-
-enum PrintingConfigs {
-  numOfCopies
-  layout
-  pages
-  pagesPerSheet
-  pageSide
-}

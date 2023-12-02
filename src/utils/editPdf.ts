@@ -1,11 +1,12 @@
 import { degrees, PDFDocument } from 'pdf-lib';
 
-export type PageSide = 'one' | 'both';
-export type EdgeBinding = 'long' | 'short';
-export type PageSideEdge = 'one' | EdgeBinding;
-export type KeepPages = 'all' | 'odd' | 'even' | string[];
-export type Orientation = 'portrait' | 'landscape';
-export type PagePerSheet = 1 | 2 | 4 | 6 | 9 | 16;
+// Bring this together when reuse this file
+// export type PageSide = 'one' | 'both';
+// export type EdgeBinding = 'long' | 'short';
+// export type PageSideEdge = 'one' | EdgeBinding;
+// export type KeepPages = 'all' | 'odd' | 'even' | string[];
+// export type Orientation = 'portrait' | 'landscape';
+// export type PagePerSheet = 1 | 2 | 4 | 6 | 9 | 16;
 
 const setPageSide: (pdfByte: Buffer, option: PageSide) => Promise<Buffer> = async (pdfByte, option) => {
     try {

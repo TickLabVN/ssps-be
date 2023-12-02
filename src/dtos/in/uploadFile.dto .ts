@@ -22,10 +22,17 @@ export const UploadConfigParamsDto = Type.Object({
 
 export const UploadConfigBodyDto = Type.Object({
     numOfCopies: Type.Number(),
-    layout: Type.String(),
-    pages: Type.String(),
-    pagesPerSheet: Type.String(),
-    pageSide: Type.String()
+    layout: Type.Union([Type.Literal('portrait'), Type.Literal('landscape')]),
+    pages: Type.Union([Type.Literal('all'), Type.Literal('odd'), Type.Literal('even'), Type.Array(Type.String())]),
+    pagesPerSheet: Type.Union([
+        Type.Literal('1'),
+        Type.Literal('2'),
+        Type.Literal('4'),
+        Type.Literal('6'),
+        Type.Literal('9'),
+        Type.Literal('16')
+    ]),
+    pageSide: Type.Union([Type.Literal('one'), Type.Literal('long'), Type.Literal('short')])
 });
 
 export const FilePrintAmountChangeRequestBodyDto = Type.Object({

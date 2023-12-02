@@ -15,7 +15,7 @@ export const nodePrinter: Printer = {
         return new Promise((resolve, reject) => {
             printer.printDirect({
                 data: buffer,
-                // printer: 'PDF',
+                // printer: 'MF3010',
                 // type: 'JPEG',
                 printer: printerName,
                 type: fileType,
