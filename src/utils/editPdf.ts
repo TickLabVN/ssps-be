@@ -1,10 +1,11 @@
 import { degrees, PDFDocument } from 'pdf-lib';
 
 export type PageSide = 'one' | 'both';
+export type EdgeBinding = 'long' | 'short';
+export type PageSideEdge = 'one' | EdgeBinding;
 export type KeepPages = 'all' | 'odd' | 'even' | string[];
 export type Orientation = 'portrait' | 'landscape';
 export type PagePerSheet = 1 | 2 | 4 | 6 | 9 | 16;
-export type EdgeBinding = 'long' | 'short';
 
 const setPageSide: (pdfByte: Buffer, option: PageSide) => Promise<Buffer> = async (pdfByte, option) => {
     try {
@@ -223,28 +224,28 @@ const setTwoSideShortLongEdge: (pdfByte: Buffer, orientation: Orientation, edgeB
 /**
  *
  * @param pdfByte A buffer of the PDF file.
- * Note that this file must have configuration is pageSide = 'one', keepPages = 'all', orientation = 'portrait',  pagePerSheet = 1, edgeBinding = 'long'.
- * @param pageSide 'one' | 'both'
+ * Note that this file must have configuration is pageSideEdge='long' keepPages = 'all', orientation = 'portrait',  pagePerSheet = 1.
+ * @param pageSideEdge 'one' | 'long' | 'short'
  * @param keepPages 'all' | 'odd' | 'even' | string[]
  * Example: ['1', '3-5', '9']
  * @param orientation 'portrait' | 'landscape'
  * @param pagePerSheet 1 | 2 | 4 | 6 | 9 | 16
  * @param edgeBinding 'long' | 'short'
  * @returns An edited pdf file
- * @example editPdfPrinting(pdfBuffer, 'both', ['9', '3-5', '1'], 'landscape', 6, 'long');
+ * @example editPdfPrinting(pdfBuffer, 'long', ['9', '3-5', '1'], 'landscape', 6);
  */
 const editPdfPrinting = async (
     pdfByte: Buffer,
-    pageSide: PageSide,
+    pageSideEdge: PageSideEdge,
     keepPages: KeepPages,
     orientation: Orientation,
-    pagePerSheet: PagePerSheet,
-    edgeBinding?: EdgeBinding
+    pagePerSheet: PagePerSheet
 ): Promise<Buffer> => {
     const withKeepPages = await setKeepPages(pdfByte, keepPages);
     const withOrientation = await convertToPortraitOrLandscape(withKeepPages, orientation, pagePerSheet);
-    const withEdgeBinding = await setTwoSideShortLongEdge(withOrientation, orientation, edgeBinding);
-    const withPageSide = await setPageSide(withEdgeBinding, pageSide);
+    const withEdgeBinding =
+        pageSideEdge === 'one' ? withOrientation : await setTwoSideShortLongEdge(withOrientation, orientation, pageSideEdge);
+    const withPageSide = await setPageSide(withEdgeBinding, pageSideEdge === 'one' ? 'one' : 'both');
 
     return withPageSide;
 };
