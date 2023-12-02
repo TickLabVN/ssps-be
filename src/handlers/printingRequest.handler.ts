@@ -12,7 +12,7 @@ import {
 } from '@dtos/out';
 import { Handler, Printer } from '@interfaces';
 import { PAID, PRINTING_STATUS } from '@constants';
-import { generateUniqueHashFileName, logger, minio } from '@utils';
+import { editPdf, generateUniqueHashFileName, logger, minio } from '@utils';
 import {
     FilePrintAmountChangeRequestBodyDto,
     MultiFilePrintAmountChangeRequestBodyDto,
@@ -182,7 +182,7 @@ const handleUploadingFile = async (printingRequestId: string, file: Buffer, file
     }
 };
 
-const handleUploadingConfig = async (fileId: string, config: PrintingConfigs) => {
+const handleUploadingConfig = async (fileId: string, config: UploadConfigBodyDto) => {
     try {
         const file = await prisma.file.findUnique({
             where: {
@@ -194,12 +194,6 @@ const handleUploadingConfig = async (fileId: string, config: PrintingConfigs) =>
 
         const configJSON = JSON.stringify(config);
         const configBuffer = Buffer.from(configJSON);
-
-        const fileExtension = file.minioName.split('.').pop();
-
-        if (!fileExtension) {
-            throw new Error('Invalid minioName in the file');
-        }
 
         await prisma.$transaction(async () => {
             const oldAmountPrinting = file.fileNum;
@@ -224,7 +218,7 @@ const handleUploadingConfig = async (fileId: string, config: PrintingConfigs) =>
                     }
                 });
             }
-            const configName = file.minioName.replace(`.${fileExtension}`, '.json');
+            const configName = convertFileNameToConfigFileName(file.minioName);
             await removeConfigInMinio(file);
 
             await minio.uploadFileToMinio(configName, configBuffer);
@@ -308,6 +302,30 @@ const uploadFileToPrintingRequest: Handler<
     }
 };
 
+const convertFileNameToConfigFileName = (objectName: string) => {
+    const fileExtension = objectName.split('.').pop();
+
+    if (!fileExtension) {
+        throw new Error('Invalid minioName in the file');
+    }
+
+    const configName = objectName.replace(`.${fileExtension}`, '.json');
+
+    return configName;
+};
+
+const getConfigOfFile = async (minioName: string) => {
+    const configName = convertFileNameToConfigFileName(minioName);
+
+    const configBuffer = await minio.getFileFromMinio(configName);
+
+    const configString = configBuffer.toString('utf-8');
+
+    const config: UploadConfigBodyDto = JSON.parse(configString);
+
+    return config;
+};
+
 const uploadConfigToPrintingRequest: Handler<UploadConfigResultDto, { Params: UploadConfigParamsDto; Body: UploadConfigBodyDto }> = async (
     req,
     res
@@ -363,8 +381,17 @@ const executePrintingRequest: Handler<PrintingFileResultDto, { Body: PrintingReq
 
         filesOfPrintingRequest.forEach(async (file) => {
             const buffer = await minio.getFileFromMinio(file.minioName);
+            const config = await getConfigOfFile(file.minioName);
 
-            for (let i = 0; i < file.fileNum; i++) await printFileFromBuffer(nodePrinter, buffer);
+            const configurationBuffer = await editPdf.editPdfPrinting(
+                buffer,
+                config.pageSide,
+                config.pages,
+                config.layout,
+                Number(config.pagesPerSheet) as PagePerSheet
+            );
+
+            for (let i = 0; i < file.fileNum; i++) await printFileFromBuffer(nodePrinter, configurationBuffer);
         });
 
         return res.status(200).send({ status: 'printing', message: 'The printing request is being executed' });
@@ -423,13 +450,7 @@ const removeFileInMinioAndDB = async (file: File) => {
 
 const removeConfigInMinio = async (file: File) => {
     try {
-        const fileExtension = file.minioName.split('.').pop();
-
-        if (!fileExtension) {
-            throw new Error('Invalid minioName in the file');
-        }
-
-        const configName = file.minioName.replace(`.${fileExtension}`, '.json');
+        const configName = convertFileNameToConfigFileName(file.minioName);
 
         const isConfigFileExist = await minio.isObjectExistInMinio(envs.MINIO_BUCKET_NAME, configName);
 
@@ -514,14 +535,7 @@ const cancelPrintingRequest: Handler<CancelPrintingRequestResultDto, { Params: P
 };
 
 const updateFilePrintNumber = async (file: File, numOfCopies: number) => {
-    const fileExtension = file.minioName.split('.').pop();
-    const configName = file.minioName.replace(`.${fileExtension}`, '.json');
-
-    const configBuffer = await minio.getFileFromMinio(configName);
-
-    const configString = configBuffer.toString('utf-8');
-
-    const config: PrintingConfigs = JSON.parse(configString);
+    const config: UploadConfigBodyDto = await getConfigOfFile(file.minioName);
 
     const newConfig = {
         numOfCopies: numOfCopies,
