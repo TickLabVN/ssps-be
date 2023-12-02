@@ -201,13 +201,9 @@ const setTwoSideShortLongEdge: (pdfByte: Buffer, orientation: Orientation, edgeB
 
             const embedPage = await newPdfDoc.embedPage(pdfDoc.getPage(pageNum));
 
-            //TODO: remove scale
-            const embedPageDims = embedPage.scale(1);
-
             const adjustCoefficient = pageNum % 2 ? 1 : 0;
 
             newPage.drawPage(embedPage, {
-                ...embedPageDims,
                 rotate: degrees(180 * adjustCoefficient),
                 x: embedPage.width * adjustCoefficient,
                 y: embedPage.height * adjustCoefficient

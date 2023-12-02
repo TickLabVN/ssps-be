@@ -204,7 +204,7 @@ const handleUploadingConfig = async (fileId: string, config: PrintingConfigs) =>
         await prisma.$transaction(async () => {
             const oldAmountPrinting = file.fileNum;
 
-            const increaseCoinFactor = config.numOfCopies - oldAmountPrinting;
+            const increaseFactor = config.numOfCopies - oldAmountPrinting;
 
             await prisma.file.update({
                 where: {
@@ -215,11 +215,12 @@ const handleUploadingConfig = async (fileId: string, config: PrintingConfigs) =>
                 }
             });
 
-            if (increaseCoinFactor !== 0) {
+            if (increaseFactor !== 0) {
                 await prisma.printingRequest.update({
                     where: { id: file.printingRequestId },
                     data: {
-                        coins: { [increaseCoinFactor > 0 ? 'increment' : 'decrement']: Math.abs(increaseCoinFactor) * file.fileCoin }
+                        coins: { [increaseFactor > 0 ? 'increment' : 'decrement']: Math.abs(increaseFactor) * file.fileCoin },
+                        numPages: { [increaseFactor > 0 ? 'increment' : 'decrement']: Math.abs(increaseFactor) * file.numPage }
                     }
                 });
             }
@@ -363,8 +364,7 @@ const executePrintingRequest: Handler<PrintingFileResultDto, { Body: PrintingReq
         filesOfPrintingRequest.forEach(async (file) => {
             const buffer = await minio.getFileFromMinio(file.minioName);
 
-            //TODO: number of copies
-            await printFileFromBuffer(nodePrinter, buffer);
+            for (let i = 0; i < file.fileNum; i++) await printFileFromBuffer(nodePrinter, buffer);
         });
 
         return res.status(200).send({ status: 'printing', message: 'The printing request is being executed' });
@@ -402,7 +402,16 @@ const removeFileInMinioAndDB = async (file: File) => {
 
     try {
         await prisma.$transaction(async () => {
-            //TODO: update information of printing request
+            await prisma.printingRequest.update({
+                where: { id: file.printingRequestId },
+                data: {
+                    numFiles: { decrement: 1 },
+                    coins: {
+                        decrement: file.fileCoin * file.fileNum
+                    },
+                    numPages: { decrement: file.numPage * file.fileNum }
+                }
+            });
             await prisma.file.delete({ where: { id: file.id } });
             await minio.removeFileFromMinio(fileName);
         });
@@ -504,7 +513,7 @@ const cancelPrintingRequest: Handler<CancelPrintingRequestResultDto, { Params: P
     }
 };
 
-const updateFilePrintNumberMinio = async (file: File, numOfCopies: number) => {
+const updateFilePrintNumber = async (file: File, numOfCopies: number) => {
     const fileExtension = file.minioName.split('.').pop();
     const configName = file.minioName.replace(`.${fileExtension}`, '.json');
 
@@ -541,25 +550,7 @@ const mutilFilePrintNumberChangeRequest: Handler<
             if (!isFileExist) res.notFound("File doesn't exist");
 
             await prisma.$transaction(async () => {
-                await updateFilePrintNumberMinio(file, numOfCopies);
-
-                const oldAmountPrinting = file.fileNum;
-
-                const increaseCoinFactor = numOfCopies - oldAmountPrinting;
-
-                await prisma.file.update({
-                    where: { id: file.id },
-                    data: { fileNum: numOfCopies }
-                });
-
-                if (increaseCoinFactor !== 0) {
-                    await prisma.printingRequest.update({
-                        where: { id: file.printingRequestId },
-                        data: {
-                            coins: { [increaseCoinFactor > 0 ? 'increment' : 'decrement']: Math.abs(increaseCoinFactor) * file.fileCoin }
-                        }
-                    });
-                }
+                await updateFilePrintNumber(file, numOfCopies);
             });
         });
 
@@ -596,25 +587,7 @@ const filePrintNumberChangeRequest: Handler<FilePrintNumberChangeRequestResultDt
         if (!isFileExist) res.notFound("File doesn't exist");
 
         await prisma.$transaction(async () => {
-            await updateFilePrintNumberMinio(file, numOfCopies);
-
-            const oldAmountPrinting = file.fileNum;
-
-            const increaseCoinFactor = numOfCopies - oldAmountPrinting;
-
-            await prisma.file.update({
-                where: { id: file.id },
-                data: { fileNum: numOfCopies }
-            });
-
-            if (increaseCoinFactor !== 0) {
-                await prisma.printingRequest.update({
-                    where: { id: file.printingRequestId },
-                    data: {
-                        coins: { [increaseCoinFactor > 0 ? 'increment' : 'decrement']: Math.abs(increaseCoinFactor) * file.fileCoin }
-                    }
-                });
-            }
+            await updateFilePrintNumber(file, numOfCopies);
         });
 
         return res.status(200).send({
