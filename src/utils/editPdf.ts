@@ -1,9 +1,12 @@
-import fs from 'fs/promises';
-import path from 'path';
 import { degrees, PDFDocument } from 'pdf-lib';
-import { logger } from './logger';
 
-const pageSide: (pdfByte: Buffer, option: 'one' | 'both') => Promise<Buffer> = async (pdfByte, option) => {
+export type PageSide = 'one' | 'both';
+export type KeepPages = 'all' | 'odd' | 'even' | string[];
+export type Orientation = 'portrait' | 'landscape';
+export type PagePerSheet = 1 | 2 | 4 | 6 | 9 | 16;
+export type EdgeBinding = 'long' | 'short';
+
+const setPageSide: (pdfByte: Buffer, option: PageSide) => Promise<Buffer> = async (pdfByte, option) => {
     try {
         const pdfDoc = await PDFDocument.load(pdfByte);
 
@@ -20,12 +23,11 @@ const pageSide: (pdfByte: Buffer, option: 'one' | 'both') => Promise<Buffer> = a
 
         return buffer;
     } catch (error) {
-        logger.error('pageSide error');
         throw error;
     }
 };
 
-const keepPages: (pdfByte: Buffer, option: 'all' | 'odd' | 'even' | string[]) => Promise<Buffer> = async (pdfByte, option) => {
+const setKeepPages: (pdfByte: Buffer, option: KeepPages) => Promise<Buffer> = async (pdfByte, option) => {
     try {
         if (option === 'all') return pdfByte;
 
@@ -66,16 +68,15 @@ const keepPages: (pdfByte: Buffer, option: 'all' | 'odd' | 'even' | string[]) =>
 
         return buffer;
     } catch (err) {
-        logger.error('keepPages error:', err.message);
         throw err;
     }
 };
 
-const convertToPortraitOrLandscape: (
-    pdfByte: Buffer,
-    orientation: 'portrait' | 'landscape',
-    pagePerSheet: 1 | 2 | 4 | 6 | 9 | 16
-) => Promise<Buffer> = async (pdfByte, orientation, pagePerSheet) => {
+const convertToPortraitOrLandscape: (pdfByte: Buffer, orientation: Orientation, pagePerSheet: PagePerSheet) => Promise<Buffer> = async (
+    pdfByte,
+    orientation,
+    pagePerSheet
+) => {
     try {
         if (orientation === 'portrait' && pagePerSheet === 1) return pdfByte;
         if (orientation === 'landscape' && pagePerSheet === 1) throw new Error("Can't create landscape pages with one page per sheet");
@@ -182,12 +183,13 @@ const convertToPortraitOrLandscape: (
     }
 };
 
-const setTwoSideShortLongEdge: (
-    pdfByte: Buffer,
-    orientation: 'portrait' | 'landscape',
-    edgeBinding: 'long' | 'short'
-) => Promise<Buffer> = async (pdfByte, orientation, edgeBinding) => {
+const setTwoSideShortLongEdge: (pdfByte: Buffer, orientation: Orientation, edgeBinding?: EdgeBinding) => Promise<Buffer> = async (
+    pdfByte,
+    orientation,
+    edgeBinding
+) => {
     try {
+        if (!edgeBinding) return pdfByte;
         if (orientation === 'portrait' && edgeBinding === 'long') return pdfByte;
         if (orientation === 'landscape' && edgeBinding === 'short') return pdfByte;
         const newPdfDoc = await PDFDocument.create();
@@ -222,28 +224,33 @@ const setTwoSideShortLongEdge: (
     }
 };
 
-const testFunction = async () => {
-    try {
-        const rootPath = process.cwd();
-        const inputPath = path.join(rootPath, 'pdf/in/file.pdf');
-        const outputPath = path.join(rootPath, 'pdf/out/file.pdf');
+/**
+ *
+ * @param pdfByte A buffer of the PDF file.
+ * Note that this file must have configuration is pageSide = 'one', keepPages = 'all', orientation = 'portrait',  pagePerSheet = 1, edgeBinding = 'long'.
+ * @param pageSide 'one' | 'both'
+ * @param keepPages 'all' | 'odd' | 'even' | string[]
+ * Example: ['1', '3-5', '9']
+ * @param orientation 'portrait' | 'landscape'
+ * @param pagePerSheet 1 | 2 | 4 | 6 | 9 | 16
+ * @param edgeBinding 'long' | 'short'
+ * @returns An edited pdf file
+ * @example editPdfPrinting(pdfBuffer, 'both', ['9', '3-5', '1'], 'landscape', 6, 'long');
+ */
+const editPdfPrinting = async (
+    pdfByte: Buffer,
+    pageSide: PageSide,
+    keepPages: KeepPages,
+    orientation: Orientation,
+    pagePerSheet: PagePerSheet,
+    edgeBinding?: EdgeBinding
+): Promise<Buffer> => {
+    const withKeepPages = await setKeepPages(pdfByte, keepPages);
+    const withOrientation = await convertToPortraitOrLandscape(withKeepPages, orientation, pagePerSheet);
+    const withEdgeBinding = await setTwoSideShortLongEdge(withOrientation, orientation, edgeBinding);
+    const withPageSide = await setPageSide(withEdgeBinding, pageSide);
 
-        const pdfBuffer = await fs.readFile(inputPath);
-
-        const modifiedPdfBuffer = await setTwoSideShortLongEdge(
-            await convertToPortraitOrLandscape(pdfBuffer, 'landscape', 2),
-            'landscape',
-            'long'
-        );
-
-        await fs.writeFile(outputPath, modifiedPdfBuffer);
-
-        logger.info('PDF file successfully processed and saved.');
-    } catch (error) {
-        logger.error(error);
-    }
+    return withPageSide;
 };
 
-testFunction();
-
-export const editPdf = { pageSide, keepPages, testFunction, convertToPortraitOrLandscape, setTwoSideShortLongEdge };
+export const editPdf = { setPageSide, setKeepPages, convertToPortraitOrLandscape, setTwoSideShortLongEdge, editPdfPrinting };
