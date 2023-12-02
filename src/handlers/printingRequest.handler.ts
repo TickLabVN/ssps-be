@@ -201,27 +201,33 @@ const handleUploadingConfig = async (fileId: string, config: PrintingConfigs) =>
             throw new Error('Invalid minioName in the file');
         }
 
-        await prisma.file.update({
-            where: {
-                id: fileId
-            },
-            data: {
-                fileNum: Number(config.numOfCopies)
+        await prisma.$transaction(async () => {
+            const oldAmountPrinting = file.fileNum;
+
+            const increaseFactor = config.numOfCopies - oldAmountPrinting;
+
+            await prisma.file.update({
+                where: {
+                    id: fileId
+                },
+                data: {
+                    fileNum: config.numOfCopies
+                }
+            });
+
+            if (increaseFactor !== 0) {
+                await prisma.printingRequest.update({
+                    where: { id: file.printingRequestId },
+                    data: {
+                        coins: { [increaseFactor > 0 ? 'increment' : 'decrement']: Math.abs(increaseFactor) * file.fileCoin },
+                        numPages: { [increaseFactor > 0 ? 'increment' : 'decrement']: Math.abs(increaseFactor) * file.numPage }
+                    }
+                });
             }
-        });
+            const configName = file.minioName.replace(`.${fileExtension}`, '.json');
+            await removeConfigInMinio(file);
 
-        const configName = file.minioName.replace(`.${fileExtension}`, '.json');
-        await removeConfigInMinio(file);
-
-        await minio.uploadFileToMinio(configName, configBuffer);
-
-        await prisma.file.update({
-            where: {
-                id: file.id
-            },
-            data: {
-                fileNum: Number(config.numOfCopies)
-            }
+            await minio.uploadFileToMinio(configName, configBuffer);
         });
 
         return;
@@ -345,7 +351,8 @@ const getFilesOfPrintingRequest = async (printingRequestId: string) => {
             fileSize: true,
             numPage: true,
             fileNum: true
-        }
+        },
+        orderBy: { created_at: 'desc' }
     });
     return files;
 };
@@ -357,8 +364,7 @@ const executePrintingRequest: Handler<PrintingFileResultDto, { Body: PrintingReq
         filesOfPrintingRequest.forEach(async (file) => {
             const buffer = await minio.getFileFromMinio(file.minioName);
 
-            //TODO: number of copies
-            await printFileFromBuffer(nodePrinter, buffer);
+            for (let i = 0; i < file.fileNum; i++) await printFileFromBuffer(nodePrinter, buffer);
         });
 
         return res.status(200).send({ status: 'printing', message: 'The printing request is being executed' });
@@ -396,6 +402,16 @@ const removeFileInMinioAndDB = async (file: File) => {
 
     try {
         await prisma.$transaction(async () => {
+            await prisma.printingRequest.update({
+                where: { id: file.printingRequestId },
+                data: {
+                    numFiles: { decrement: 1 },
+                    coins: {
+                        decrement: file.fileCoin * file.fileNum
+                    },
+                    numPages: { decrement: file.numPage * file.fileNum }
+                }
+            });
             await prisma.file.delete({ where: { id: file.id } });
             await minio.removeFileFromMinio(fileName);
         });
@@ -497,7 +513,7 @@ const cancelPrintingRequest: Handler<CancelPrintingRequestResultDto, { Params: P
     }
 };
 
-const updateFilePrintNumberMinio = async (file: File, numOfCopies: number) => {
+const updateFilePrintNumber = async (file: File, numOfCopies: number) => {
     const fileExtension = file.minioName.split('.').pop();
     const configName = file.minioName.replace(`.${fileExtension}`, '.json');
 
@@ -534,12 +550,7 @@ const mutilFilePrintNumberChangeRequest: Handler<
             if (!isFileExist) res.notFound("File doesn't exist");
 
             await prisma.$transaction(async () => {
-                await updateFilePrintNumberMinio(file, numOfCopies);
-
-                await prisma.file.update({
-                    where: { id: file.id },
-                    data: { fileNum: numOfCopies }
-                });
+                await updateFilePrintNumber(file, numOfCopies);
             });
         });
 
@@ -562,22 +573,21 @@ const filePrintNumberChangeRequest: Handler<FilePrintNumberChangeRequestResultDt
     try {
         const { fileId, numOfCopies } = req.body;
 
+        if (numOfCopies < 1) return res.badRequest('The amount printing minimal is 1');
+
         const file = await prisma.file.findUnique({
             where: { id: fileId }
         });
 
-        if (!file) throw new Error('Invalid file id');
+        if (!file) return res.badRequest('Invalid file id');
+
+        if (file.fileNum === numOfCopies) return res.badRequest('The amount printing is unchanged');
 
         const isFileExist = await minio.isObjectExistInMinio(envs.MINIO_BUCKET_NAME, file.minioName);
         if (!isFileExist) res.notFound("File doesn't exist");
 
         await prisma.$transaction(async () => {
-            await updateFilePrintNumberMinio(file, numOfCopies);
-
-            await prisma.file.update({
-                where: { id: file.id },
-                data: { fileNum: numOfCopies }
-            });
+            await updateFilePrintNumber(file, numOfCopies);
         });
 
         return res.status(200).send({
