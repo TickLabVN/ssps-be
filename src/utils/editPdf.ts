@@ -66,56 +66,10 @@ const keepPages: (pdfByte: Buffer, option: 'all' | 'odd' | 'even' | string[]) =>
 
         return buffer;
     } catch (err) {
-        console.error('keepPages error:', err.message);
+        logger.error('keepPages error:', err.message);
         throw err;
     }
 };
-
-// export const oldConvertToPortraitOrLandscape: (pdfByte: Buffer, orientation: 'portrait' | 'landscape') => Promise<Buffer> = async (
-//     pdfByte,
-//     orientation
-// ) => {
-//     try {
-//         const pdfDoc = await PDFDocument.load(pdfByte);
-//         const newPdfDoc = await PDFDocument.create();
-
-//         const pageCount = pdfDoc.getPageCount();
-
-//         for (let i = 0; i < pageCount; i += orientation === 'landscape' ? 2 : 1) {
-//             const newPage = newPdfDoc.addPage();
-
-//             const firstPage = await newPdfDoc.embedPage(pdfDoc.getPage(i));
-//             const secondPage = await newPdfDoc.embedPage(pdfDoc.getPage(i + 1));
-
-//             const scaleRatio = newPage.getWidth() / newPage.getHeight();
-
-//             const firstPageDims = firstPage.scale(scaleRatio);
-//             const secondPageDims = secondPage.scale(scaleRatio);
-
-//             newPage.drawPage(firstPage, {
-//                 ...firstPageDims,
-//                 x: (newPage.getWidth() - firstPageDims.height) / 2,
-//                 y: newPage.getHeight() - (newPage.getHeight() / 2 - firstPageDims.width) / 2,
-//                 rotate: degrees(-90)
-//             });
-
-//             newPage.drawPage(secondPage, {
-//                 ...secondPageDims,
-//                 x: (newPage.getWidth() - secondPageDims.height) / 2,
-//                 y: (newPage.getHeight() / 2) * (2 - 1) - (newPage.getHeight() / 2 - secondPageDims.width) / 2,
-//                 rotate: degrees(-90)
-//             });
-//         }
-
-//         const uint8Array = await newPdfDoc.save();
-//         const buffer = Buffer.from(uint8Array);
-
-//         return buffer;
-//     } catch (error) {
-//         console.error('Conversion error:', error.message);
-//         throw error;
-//     }
-// };
 
 const convertToPortraitOrLandscape: (
     pdfByte: Buffer,
@@ -123,24 +77,68 @@ const convertToPortraitOrLandscape: (
     pagePerSheet: 1 | 2 | 4 | 6 | 9 | 16
 ) => Promise<Buffer> = async (pdfByte, orientation, pagePerSheet) => {
     try {
-        const AMOUNT_ROW_OF_NEW_PAGE_CONVENTION: { [key in typeof pagePerSheet]: number } = {
-            1: 1,
-            2: 1,
-            4: 2,
-            6: 2,
-            9: 3,
-            16: 4
-        };
-
+        if (orientation === 'portrait' && pagePerSheet === 1) return pdfByte;
+        if (orientation === 'landscape' && pagePerSheet === 1) throw new Error("Can't create landscape pages with one page per sheet");
+        const newPdfDoc = await PDFDocument.create();
         const pdfDoc = await PDFDocument.load(pdfByte);
         const pageCount = pdfDoc.getPageCount();
 
-        const newPdfDoc = await PDFDocument.create();
+        if (orientation === 'portrait') {
+            const AMOUNT_ROW_OF_NEW_PAGE_CONVENTION: { [key in typeof pagePerSheet]: number } = {
+                1: 1,
+                2: 2,
+                4: 2,
+                6: 3,
+                9: 3,
+                16: 4
+            };
 
-        const amountRowOfNewPage = AMOUNT_ROW_OF_NEW_PAGE_CONVENTION[pagePerSheet];
-        const amountColumnOfNewPage = pagePerSheet / amountRowOfNewPage;
+            const amountRowOfNewPage = AMOUNT_ROW_OF_NEW_PAGE_CONVENTION[pagePerSheet];
+            const amountColumnOfNewPage = pagePerSheet / amountRowOfNewPage;
+            for (let pageNum = 0; pageNum < pageCount; pageNum += pagePerSheet) {
+                const newPage = newPdfDoc.addPage();
 
-        if (orientation === 'landscape' && pagePerSheet !== 1)
+                const scaleRatio = 1 / amountRowOfNewPage;
+                const cellDims: { x: number; y: number } = {
+                    x: newPage.getWidth() / amountColumnOfNewPage,
+                    y: newPage.getHeight() / amountRowOfNewPage
+                };
+
+                for (let rowNum = 0; rowNum < amountRowOfNewPage; rowNum++)
+                    for (let colNum = 0; colNum < amountColumnOfNewPage; colNum++) {
+                        const embedOrder = rowNum * amountColumnOfNewPage + colNum;
+                        const embedPageNum = pageNum + embedOrder;
+                        if (embedPageNum >= pageCount) break;
+
+                        const embedPage = await newPdfDoc.embedPage(pdfDoc.getPage(embedPageNum));
+
+                        const embedPageDims = embedPage.scale(scaleRatio);
+                        const centerMove: { x: number; y: number } = {
+                            x: (cellDims.x - embedPageDims.width) / 2,
+                            y: (cellDims.y - embedPageDims.height) / 2
+                        };
+
+                        newPage.drawPage(embedPage, {
+                            ...embedPageDims,
+                            x: cellDims.x * colNum + centerMove.x,
+                            y: newPage.getHeight() - cellDims.y * (rowNum + 1) - centerMove.y
+                        });
+                    }
+            }
+        }
+
+        if (orientation === 'landscape') {
+            const AMOUNT_ROW_OF_NEW_PAGE_CONVENTION: { [key in typeof pagePerSheet]: number } = {
+                1: 1,
+                2: 1,
+                4: 2,
+                6: 2,
+                9: 3,
+                16: 4
+            };
+
+            const amountRowOfNewPage = AMOUNT_ROW_OF_NEW_PAGE_CONVENTION[pagePerSheet];
+            const amountColumnOfNewPage = pagePerSheet / amountRowOfNewPage;
             for (let pageNum = 0; pageNum < pageCount; pageNum += pagePerSheet) {
                 const newPage = newPdfDoc.addPage();
 
@@ -172,6 +170,7 @@ const convertToPortraitOrLandscape: (
                         });
                     }
             }
+        }
 
         const uint8Array = await newPdfDoc.save();
         const buffer = Buffer.from(uint8Array);
@@ -191,7 +190,7 @@ const testFunction = async () => {
 
         const pdfBuffer = await fs.readFile(inputPath);
 
-        const modifiedPdfBuffer = await convertToPortraitOrLandscape(pdfBuffer, 'landscape', 16);
+        const modifiedPdfBuffer = await convertToPortraitOrLandscape(pdfBuffer, 'portrait', 16);
 
         await fs.writeFile(outputPath, modifiedPdfBuffer);
 
