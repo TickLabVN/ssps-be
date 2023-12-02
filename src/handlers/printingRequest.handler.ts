@@ -345,7 +345,8 @@ const getFilesOfPrintingRequest = async (printingRequestId: string) => {
             fileSize: true,
             numPage: true,
             fileNum: true
-        }
+        },
+        orderBy: { created_at: 'desc' }
     });
     return files;
 };
