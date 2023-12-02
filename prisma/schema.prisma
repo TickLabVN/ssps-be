@@ -61,6 +61,7 @@ model File {
   fileSize          Int             @default(0)
   fileCoin          Int             @default(0)
   fileNum           Int             @default(1)
+  created_at        DateTime        @default(now())
 }
 
 model Configuration {
@@ -84,10 +85,10 @@ enum Paid {
   not_paid
 }
 
-enum PrintingConfigs  {
-    numOfCopies
-    layout
-    pages
-    pagesPerSheet
-    pageSide
+enum PrintingConfigs {
+  numOfCopies
+  layout
+  pages
+  pagesPerSheet
+  pageSide
 }

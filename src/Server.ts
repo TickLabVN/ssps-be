@@ -22,7 +22,12 @@ export function createServer(config: ServerConfig): FastifyInstance {
         hook: 'onRequest'
     } as FastifyCookieOptions);
 
-    app.register(import('@fastify/multipart'), { attachFieldsToBody: true });
+    app.register(import('@fastify/multipart'), {
+        attachFieldsToBody: true,
+        limits: {
+            fileSize: 100 * 1024 * 1024
+        }
+    });
 
     app.register(import('@fastify/swagger'), swaggerConfig);
     app.register(import('@fastify/swagger-ui'), swaggerUIConfig);

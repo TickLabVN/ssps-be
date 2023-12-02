@@ -131,8 +131,7 @@ export const printingRequestPlugin = createRoutes('Printing Request', [
             body: MultiFilePrintAmountChangeRequestBodyDto,
             response: {
                 200: FilePrintNumberChangeRequestResultDto
-            },
-            deprecated: true
+            }
         },
         handler: printingRequestHandler.mutilFilePrintNumberChangeRequest
     },
