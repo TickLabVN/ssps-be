@@ -201,27 +201,32 @@ const handleUploadingConfig = async (fileId: string, config: PrintingConfigs) =>
             throw new Error('Invalid minioName in the file');
         }
 
-        await prisma.file.update({
-            where: {
-                id: fileId
-            },
-            data: {
-                fileNum: Number(config.numOfCopies)
+        await prisma.$transaction(async () => {
+            const oldAmountPrinting = file.fileNum;
+
+            const increaseCoinFactor = config.numOfCopies - oldAmountPrinting;
+
+            await prisma.file.update({
+                where: {
+                    id: fileId
+                },
+                data: {
+                    fileNum: config.numOfCopies
+                }
+            });
+
+            if (increaseCoinFactor !== 0) {
+                await prisma.printingRequest.update({
+                    where: { id: file.printingRequestId },
+                    data: {
+                        coins: { [increaseCoinFactor > 0 ? 'increment' : 'decrement']: Math.abs(increaseCoinFactor) * file.fileCoin }
+                    }
+                });
             }
-        });
+            const configName = file.minioName.replace(`.${fileExtension}`, '.json');
+            await removeConfigInMinio(file);
 
-        const configName = file.minioName.replace(`.${fileExtension}`, '.json');
-        await removeConfigInMinio(file);
-
-        await minio.uploadFileToMinio(configName, configBuffer);
-
-        await prisma.file.update({
-            where: {
-                id: file.id
-            },
-            data: {
-                fileNum: Number(config.numOfCopies)
-            }
+            await minio.uploadFileToMinio(configName, configBuffer);
         });
 
         return;
@@ -397,6 +402,7 @@ const removeFileInMinioAndDB = async (file: File) => {
 
     try {
         await prisma.$transaction(async () => {
+            //TODO: update information of printing request
             await prisma.file.delete({ where: { id: file.id } });
             await minio.removeFileFromMinio(fileName);
         });
