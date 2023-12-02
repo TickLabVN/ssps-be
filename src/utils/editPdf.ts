@@ -182,6 +182,46 @@ const convertToPortraitOrLandscape: (
     }
 };
 
+const setTwoSideShortLongEdge: (
+    pdfByte: Buffer,
+    orientation: 'portrait' | 'landscape',
+    edgeBinding: 'long' | 'short'
+) => Promise<Buffer> = async (pdfByte, orientation, edgeBinding) => {
+    try {
+        if (orientation === 'portrait' && edgeBinding === 'long') return pdfByte;
+        if (orientation === 'landscape' && edgeBinding === 'short') return pdfByte;
+        const newPdfDoc = await PDFDocument.create();
+        const pdfDoc = await PDFDocument.load(pdfByte);
+        const pageCount = pdfDoc.getPageCount();
+
+        for (let pageNum = 0; pageNum < pageCount; pageNum++) {
+            const newPage = newPdfDoc.addPage();
+
+            const embedPage = await newPdfDoc.embedPage(pdfDoc.getPage(pageNum));
+
+            //TODO: remove scale
+            const embedPageDims = embedPage.scale(1);
+
+            const adjustCoefficient = pageNum % 2 ? 1 : 0;
+
+            newPage.drawPage(embedPage, {
+                ...embedPageDims,
+                rotate: degrees(180 * adjustCoefficient),
+                x: embedPage.width * adjustCoefficient,
+                y: embedPage.height * adjustCoefficient
+            });
+        }
+
+        const uint8Array = await newPdfDoc.save();
+        const buffer = Buffer.from(uint8Array);
+
+        return buffer;
+    } catch (error) {
+        console.error('Conversion error:', error.message);
+        throw error;
+    }
+};
+
 const testFunction = async () => {
     try {
         const rootPath = process.cwd();
@@ -190,7 +230,11 @@ const testFunction = async () => {
 
         const pdfBuffer = await fs.readFile(inputPath);
 
-        const modifiedPdfBuffer = await convertToPortraitOrLandscape(pdfBuffer, 'portrait', 16);
+        const modifiedPdfBuffer = await setTwoSideShortLongEdge(
+            await convertToPortraitOrLandscape(pdfBuffer, 'landscape', 2),
+            'landscape',
+            'long'
+        );
 
         await fs.writeFile(outputPath, modifiedPdfBuffer);
 
@@ -202,4 +246,4 @@ const testFunction = async () => {
 
 testFunction();
 
-export const editPdf = { pageSide, keepPages, testFunction, convertToPortraitOrLandscape };
+export const editPdf = { pageSide, keepPages, testFunction, convertToPortraitOrLandscape, setTwoSideShortLongEdge };
