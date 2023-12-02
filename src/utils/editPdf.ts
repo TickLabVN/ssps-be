@@ -127,7 +127,7 @@ const convertToPortraitOrLandscape: (
             1: 1,
             2: 1,
             4: 2,
-            6: 3,
+            6: 2,
             9: 3,
             16: 4
         };
@@ -166,7 +166,7 @@ const convertToPortraitOrLandscape: (
 
                         newPage.drawPage(embedPage, {
                             ...embedPageDims,
-                            x: cellDims.y * rowNum + centerMove.x,
+                            x: cellDims.y * (amountRowOfNewPage - rowNum - 1) + centerMove.x,
                             y: newPage.getHeight() - cellDims.x * colNum - centerMove.y,
                             rotate: degrees(-90)
                         });
@@ -191,7 +191,7 @@ const testFunction = async () => {
 
         const pdfBuffer = await fs.readFile(inputPath);
 
-        const modifiedPdfBuffer = await convertToPortraitOrLandscape(pdfBuffer, 'landscape', 4);
+        const modifiedPdfBuffer = await convertToPortraitOrLandscape(pdfBuffer, 'landscape', 16);
 
         await fs.writeFile(outputPath, modifiedPdfBuffer);
 
