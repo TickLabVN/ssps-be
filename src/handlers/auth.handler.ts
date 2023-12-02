@@ -35,6 +35,11 @@ const login: Handler<AuthResultDto, { Body: AuthInputDto }> = async (req, res) =
     };
 };
 
+const logout: Handler<null> = async (__req, res) => {
+    res.clearCookie('token');
+    return null;
+};
+
 const validateNewUser = async (user: { email: string; password: string; userName: string; role: number[]; name: string }) => {
     const existingUsername = await prisma.user.findFirst({ where: { userName: user.userName } });
     if (existingUsername) {
@@ -149,6 +154,7 @@ const googleOAuth: Handler<AuthResultDto, { Querystring: GoogleOAuthParamsDto }>
 
 export const authHandler = {
     login,
+    logout,
     signup,
     googleOAuth
 };
