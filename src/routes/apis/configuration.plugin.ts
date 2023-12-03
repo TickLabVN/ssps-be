@@ -8,7 +8,7 @@ export const configurationPlugin = createRoutes('Configuration', [
     {
         method: 'GET',
         url: '/',
-        roles: [USER_ROLES.admin],
+        roles: ['*'],
         schema: {
             summary: 'Get list configurations',
             description: 'Get all current name and value of configurations',
@@ -21,7 +21,7 @@ export const configurationPlugin = createRoutes('Configuration', [
     {
         method: 'GET',
         url: '/acceptedExtension',
-        roles: [USER_ROLES.admin],
+        roles: ['*'],
         schema: {
             summary: 'Get list accepted extensions',
             description: 'Get all current accepted extensions of printing file',
