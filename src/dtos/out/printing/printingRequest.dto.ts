@@ -10,7 +10,8 @@ export const GetPrintingRequestResultDto = Type.Array(
         filesName: Type.Array(Type.String({ format: 'fileName' })),
         numPages: Type.Number({ format: 'pageNumber' }),
         coins: Type.Number({ format: 'coins' }),
-        paid: Type.String({ format: 'paid' })
+        paid: Type.String({ format: 'paid' }),
+        serviceFee: Type.Number()
     })
 );
 

@@ -213,7 +213,8 @@ const createConfiguration = async () => {
         { name: 'dollar to coin', value: '73', description: 'The amount of coin user gets per dollar' },
         { name: 'coin per sem', value: '100', description: 'The amount of coin a student has free in one semester' },
         ///100mb = 100 * 1024 * 1024 (byte)
-        { name: 'max file size', value: `${100 * 1024 * 1024}`, description: 'The amount of coin a student has free in one semester' }
+        { name: 'max file size', value: `${100 * 1024 * 1024}`, description: 'The amount of coin a student has free in one semester' },
+        { name: 'service fee', value: `5`, description: 'The amount of coin for a printing request be executed' }
     ];
 
     const serializedExtensions = JSON.stringify(acceptedExtensions);

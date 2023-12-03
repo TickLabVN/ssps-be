@@ -39,7 +39,8 @@ const getAllPrintingRequest: Handler<GetPrintingRequestResultDto> = async (req) 
             numPages: true,
             coins: true,
             paid: true,
-            files: { select: { realName: true } }
+            files: { select: { realName: true } },
+            serviceFee: true
         },
         where: {
             userId: {
@@ -73,10 +74,12 @@ const getAllPrintingRequest: Handler<GetPrintingRequestResultDto> = async (req) 
 const createPrintingRequest: Handler<CreatePrintingRequestResultDto> = async (req, res) => {
     try {
         const userId = req.userId;
+        const serviceFee = await DBConfiguration.serviceFee();
 
         const printingRequestId = await prisma.printingRequest.create({
             data: {
-                userId
+                userId,
+                serviceFee: serviceFee
             },
             select: { id: true }
         });
