@@ -155,7 +155,7 @@ const handleUploadingFile = async (printingRequestId: string, file: Buffer, file
     try {
         const fileInformation = await prisma.$transaction(async () => {
             const fileExtension = fileName.split('.').pop();
-            const numPage = fileExtension === 'pdf' ? await getNumpages(file) : 1;
+            const numPage = fileExtension === 'pdf' ? await getNumPages(file) : 1;
 
             const fileMetadata = {
                 fileName: fileName,
@@ -236,7 +236,7 @@ const handleUploadingConfig = async (fileId: string, config: UploadConfigBodyDto
  * @returns {Promise<number>} The number of pages in the PDF file.
  * @throws {Error} If an error occurs while parsing the PDF or if the file is not a valid PDF.
  */
-const getNumpages = async (file: Buffer) => {
+const getNumPages = async (file: Buffer) => {
     try {
         const data = await pdf(file);
         return data.numpages;
@@ -297,7 +297,7 @@ const uploadFileToPrintingRequest: Handler<
 
         return res.status(200).send(fileInformation);
     } catch (err) {
-        logger.error('???????');
+        logger.error('Error when uploading file to printing request');
         res.badRequest(err.message);
     }
 };

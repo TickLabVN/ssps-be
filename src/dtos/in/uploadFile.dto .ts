@@ -23,7 +23,7 @@ export const UploadConfigParamsDto = Type.Object({
 export const UploadConfigBodyDto = Type.Object({
     numOfCopies: Type.Number(),
     layout: Type.Union([Type.Literal('portrait'), Type.Literal('landscape')]),
-    pages: Type.Union([Type.Literal('all'), Type.Literal('odd'), Type.Literal('even'), Type.Array(Type.String())]),
+    pages: Type.Union([Type.Literal('all'), Type.Literal('odd'), Type.Literal('even'), Type.String()]),
     pagesPerSheet: Type.Union([
         Type.Literal('1'),
         Type.Literal('2'),

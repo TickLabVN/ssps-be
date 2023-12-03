@@ -43,8 +43,9 @@ const setKeepPages: (pdfByte: Buffer, option: KeepPages) => Promise<Buffer> = as
             for (let i = start; i < pageCount; i += 2) {
                 keepingPageNumbers.add(i);
             }
-        } else if (Array.isArray(option)) {
-            for (const pageOption of option) {
+        } else {
+            const optionArray = option.replace(/\s/g, '').split(',');
+            for (const pageOption of optionArray) {
                 const isValid = /^(\d+)-(\d+)$/.test(pageOption) || /^\d+$/.test(pageOption);
                 if (!isValid) throw new Error(`Invalid page option: ${pageOption}`);
 
@@ -55,17 +56,24 @@ const setKeepPages: (pdfByte: Buffer, option: KeepPages) => Promise<Buffer> = as
                     keepingPageNumbers.add(i - 1);
                 }
             }
-        } else {
-            throw new Error('Invalid option provided');
         }
 
-        for (let i = pageCount - 1; i >= 0; i--) {
-            if (!keepingPageNumbers.has(i)) {
-                pdfDoc.removePage(i);
-            }
+        const sortedKeepingPageNumbers = Array.from(keepingPageNumbers).sort((a, b) => a - b);
+
+        const newPdfDoc = await PDFDocument.create();
+
+        for (const pageNum of sortedKeepingPageNumbers) {
+            const newPage = newPdfDoc.addPage();
+
+            const embedPage = await newPdfDoc.embedPage(pdfDoc.getPage(pageNum));
+
+            newPage.drawPage(embedPage, {
+                x: 0,
+                y: 0
+            });
         }
 
-        const uint8Array = await pdfDoc.save();
+        const uint8Array = await newPdfDoc.save();
         const buffer = Buffer.from(uint8Array);
 
         return buffer;
@@ -153,7 +161,7 @@ const convertToPortraitOrLandscape: (pdfByte: Buffer, orientation: Orientation, 
 
                 for (let rowNum = 0; rowNum < amountRowOfNewPage; rowNum++)
                     for (let colNum = 0; colNum < amountColumnOfNewPage; colNum++) {
-                        const embedOrder = rowNum * amountRowOfNewPage + colNum;
+                        const embedOrder = rowNum * amountColumnOfNewPage + colNum;
                         const embedPageNum = pageNum + embedOrder;
                         if (embedPageNum >= pageCount) break;
 
@@ -228,12 +236,12 @@ const setTwoSideShortLongEdge: (pdfByte: Buffer, orientation: Orientation, edgeB
  * Note that this file must have configuration is pageSideEdge='long' keepPages = 'all', orientation = 'portrait',  pagePerSheet = 1.
  * @param pageSideEdge 'one' | 'long' | 'short'
  * @param keepPages 'all' | 'odd' | 'even' | string[]
- * Example: ['1', '3-5', '9']
+ * Example: '9, 3-5, 1'
  * @param orientation 'portrait' | 'landscape'
  * @param pagePerSheet 1 | 2 | 4 | 6 | 9 | 16
  * @param edgeBinding 'long' | 'short'
  * @returns An edited pdf file
- * @example editPdfPrinting(pdfBuffer, 'long', ['9', '3-5', '1'], 'landscape', 6);
+ * @example editPdfPrinting(pdfBuffer, 'long', '9, 3-5, 1', 'landscape', 6);
  */
 const editPdfPrinting = async (
     pdfByte: Buffer,
