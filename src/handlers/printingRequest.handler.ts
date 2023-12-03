@@ -331,6 +331,7 @@ const uploadConfigToPrintingRequest: Handler<UploadConfigResultDto, { Params: Up
     res
 ) => {
     try {
+        //TODO: update correct coin
         const fileConfig = req.body;
         if (!fileConfig) {
             return res.badRequest('Missing config data');
@@ -377,8 +378,37 @@ const getFilesOfPrintingRequest = async (printingRequestId: string) => {
 
 const executePrintingRequest: Handler<PrintingFileResultDto, { Body: PrintingRequestInputDto }> = async (req, res) => {
     try {
-        const filesOfPrintingRequest = await getFilesOfPrintingRequest(req.body.printingRequestId);
+        //TODO: roles is undefined
+        // if (!req.roles || !req.roles.includes(USER_ROLES.student)) {
+        //     return res.badRequest('This endpoint is only accessible to students.');
+        // }
 
+        const userId = req.userId;
+        const printingRequestId = req.body.printingRequestId;
+
+        const [printingRequest, student] = await Promise.all([
+            prisma.printingRequest.findFirst({ where: { id: printingRequestId }, select: { coins: true } }),
+            prisma.student.findFirst({ where: { id: userId }, select: { remain_coin: true } })
+        ]);
+
+        if (!printingRequest) {
+            return res.badRequest('Invalid printing request id');
+        }
+
+        if (!student) {
+            logger.warn('The logic of the system is incorrect; this user cannot execute the printing request');
+            return res.badRequest('This endpoint is only accessible to students.');
+        }
+
+        const requireCoins = printingRequest.coins;
+
+        if (requireCoins > student.remain_coin) {
+            return res.badRequest("User doesn't have enough coins to execute the printing request");
+        }
+
+        await prisma.student.update({ where: { id: userId }, data: { remain_coin: { decrement: requireCoins } } });
+
+        const filesOfPrintingRequest = await getFilesOfPrintingRequest(printingRequestId);
         filesOfPrintingRequest.forEach(async (file) => {
             const buffer = await minio.getFileFromMinio(file.minioName);
             const config = await getConfigOfFile(file.minioName);
