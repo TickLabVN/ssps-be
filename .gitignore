@@ -58,3 +58,6 @@ test/**/*.js.map
 
 # certs
 *.crt
+
+#Test pdf edit function
+/pdf

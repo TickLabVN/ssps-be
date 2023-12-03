@@ -1,7 +1,7 @@
-import { USER_NOT_FOUND } from '@constants';
-import { prisma } from '@repositories';
-import { UserDto } from '@dtos/out';
+import { STUDENT_NOT_FOUND, USER_NOT_FOUND } from '@constants';
+import { RemainCoinDto, UserDto } from '@dtos/out';
 import { Handler } from '@interfaces';
+import { prisma } from '@repositories';
 
 const getUserById: Handler<UserDto> = async (req, res) => {
     const userId = req.userId;
@@ -16,6 +16,19 @@ const getUserById: Handler<UserDto> = async (req, res) => {
     return user;
 };
 
+const getCoin: Handler<RemainCoinDto> = async (req, res) => {
+    const userId = req.userId;
+    const student = await prisma.student.findUnique({
+        select: {
+            remain_coin: true
+        },
+        where: { id: userId }
+    });
+    if (!student) return res.badRequest(STUDENT_NOT_FOUND);
+    return student.remain_coin;
+};
+
 export const usersHandler = {
-    getUserById
+    getUserById,
+    getCoin
 };

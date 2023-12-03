@@ -1,4 +1,4 @@
-name: CI
+name: Check conventional of commit message
 on:
   - pull_request
   - push

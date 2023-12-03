@@ -1,0 +1,45 @@
+on:
+  pull_request:
+    types:
+      - closed
+
+permissions:
+  contents: write
+  pull-requests: write
+  packages: write
+
+env: 
+  REGISTRY: ${{ vars.REGISTRY_NAME }}
+
+name: Remove test deploy
+
+jobs:
+  remove:
+    name: Remove test deploying
+    runs-on: ubuntu-latest
+
+    env:
+      TEST_DEPLOY_IMAGE_NAME: ticklabvn/ssps-be-test-deploy
+
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.base.ref == 'staging'
+
+    steps:
+      - name: remove
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          port: ${{ secrets.VPS_PORT }}
+          username: ${{ secrets.VPS_USERNAME }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            # Remove the test deploy container, image, and folder
+            cd $HOME/${{ env.TEST_DEPLOY_IMAGE_NAME }}
+            if [ $? -eq 0 ]; then
+              docker compose -f docker-compose.test-deploy.yml down --volumes --remove-orphans
+              docker image rm -f ${{ env.REGISTRY }}/${{ env.TEST_DEPLOY_IMAGE_NAME }}:latest
+              rm -rf $HOME/${{ env.TEST_DEPLOY_IMAGE_NAME }}
+            else
+              echo "Could not change directory to $HOME/${{ env.TEST_DEPLOY_IMAGE_NAME }}. Skipping removal."
+            fi
+
+            

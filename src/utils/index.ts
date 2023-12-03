@@ -3,4 +3,8 @@
  */
 
 export * from './createRoutes';
+export * from './editPdf';
+export * from './googleOAuth';
 export * from './logger';
+export * from './minio';
+export * from './uniqueHash';

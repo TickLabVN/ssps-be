@@ -12,7 +12,75 @@ datasource db {
 }
 
 model User {
-  id       String @id @default(cuid())
-  email    String @unique @db.VarChar(50)
-  password String
+  id       String    @id @default(cuid())
+  userName String?   @unique @map("userName") @db.VarChar(50)
+  password String?
+  role     Int[]
+  name     String
+  email    String    @unique
+  Student  Student[]
+}
+
+model Student {
+  user                 User              @relation(fields: [id], references: [id])
+  id                   String            @unique
+  default_coin_per_sem Int
+  remain_coin          Int
+  PrintingRequest      PrintingRequest[]
+}
+
+model PrintingRequest {
+  id         String         @id @default(cuid())
+  status     PrintingStatus @default(progressing)
+  numFiles   Int            @default(0)
+  numPages   Int            @default(0)
+  coins      Int            @default(0)
+  paid       Paid           @default(not_paid)
+  student    Student        @relation(fields: [userId], references: [id])
+  userId     String
+  files      File[]
+  location   Location?      @relation(fields: [locationId], references: [id])
+  locationId String?
+  printFee   Float          @default(0)
+  serviceFee Float          @default(0)
+}
+
+model Location {
+  id              String            @id @default(cuid())
+  address         String
+  PrintingRequest PrintingRequest[]
+}
+
+model File {
+  id                String          @id @default(cuid())
+  realName          String
+  minioName         String          @unique
+  printingRequest   PrintingRequest @relation(fields: [printingRequestId], references: [id])
+  printingRequestId String
+  numPage           Int             @default(0)
+  fileSize          Int             @default(0)
+  fileCoin          Int             @default(0)
+  fileNum           Int             @default(1)
+  created_at        DateTime        @default(now())
+}
+
+model Configuration {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  value       String
+  description String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @default(now())
+}
+
+enum PrintingStatus {
+  progressing
+  ready
+  done
+  canceled
+}
+
+enum Paid {
+  paid
+  not_paid
 }

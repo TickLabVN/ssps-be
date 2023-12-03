@@ -3,4 +3,10 @@
  */
 
 export * from './auth.handler';
+export * from './coin.handler';
+export * from './configuration.handler';
+export * from './errorHandler';
+export * from './getConfigurationInDb.handler';
+export * from './home.handler';
+export * from './printingRequest.handler';
 export * from './user.handler';

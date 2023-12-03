@@ -3,4 +3,12 @@
  */
 
 export * from './auth.dto';
-export * from './user.dto';
+export * from './homeSlide.dto';
+export * from './configuration/acceptedExtension.dto';
+export * from './configuration/configuration.dto';
+export * from './printing/checkout.dto';
+export * from './printing/printFile.dto';
+export * from './printing/printingRequest.dto';
+export * from './printing/uploadFile.dto';
+export * from './user/remainCoin.dto';
+export * from './user/user.dto';

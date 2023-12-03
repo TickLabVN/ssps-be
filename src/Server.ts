@@ -1,27 +1,44 @@
 import fastify, { FastifyInstance } from 'fastify';
 import type { FastifyCookieOptions } from '@fastify/cookie';
-import { CORS_WHITE_LIST, customErrorHandler, envs, loggerConfig, swaggerConfig, swaggerUIConfig } from '@configs';
+import { envs, loggerConfig, swaggerConfig, swaggerUIConfig } from '@configs';
 import { apiPlugin, authPlugin } from './routes';
+import { checkRoles } from '@hooks';
+import { customErrorHandler } from '@handlers';
 
 export function createServer(config: ServerConfig): FastifyInstance {
-    const app = fastify({ logger: loggerConfig[envs.NODE_ENV] });
+    const app = fastify({ logger: loggerConfig[envs.NODE_ENV], ajv: { plugins: [require('@fastify/multipart').ajvFilePlugin] } });
 
+    app.register(import('@fastify/cors'), {
+        // TODO: When come to production, change the logic of code to only set origin true on developer server
+        // origin: CORS_WHITE_LIST,
+        origin: true,
+        credentials: true
+    });
     app.register(import('@fastify/sensible'));
     app.register(import('@fastify/helmet'));
-    app.register(import('@fastify/cors'), {
-        origin: CORS_WHITE_LIST
-    });
 
     app.register(import('@fastify/cookie'), {
         secret: envs.COOKIE_SECRET, // for cookies signature
         hook: 'onRequest'
     } as FastifyCookieOptions);
 
-    // Swagger on production will be turned off in the future
-    if (envs.isDev) {
-        app.register(import('@fastify/swagger'), swaggerConfig);
-        app.register(import('@fastify/swagger-ui'), swaggerUIConfig);
-    }
+    app.register(import('@fastify/multipart'), {
+        limits: {
+            fieldNameSize: 100,
+            fieldSize: 100,
+            fields: 10,
+            fileSize: 100 * 1024 * 1024 * 1024,
+            files: 1,
+            headerPairs: 2000
+        },
+        attachFieldsToBody: true
+    });
+
+    app.register(import('@fastify/swagger'), swaggerConfig);
+    app.register(import('@fastify/swagger-ui'), swaggerUIConfig);
+
+    app.decorate('checkRoles', checkRoles);
+    app.decorate('roles', []);
 
     app.register(authPlugin, { prefix: '/auth' });
     app.register(apiPlugin, { prefix: '/api' });
