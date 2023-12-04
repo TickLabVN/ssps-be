@@ -23,6 +23,8 @@ export const coinPlugin = createRoutes('Buy coin', [
         roles: ['*'],
         schema: {
             summary: 'Create PayPal Order to buy more coin',
+            description:
+                'Create PayPal Order to buy more coin, the unit of amount is vnd, the system will convert to apporiate currency base on amount vnd',
             body: CreatePayPalOrderDto,
             response: {
                 200: PaypalDto
