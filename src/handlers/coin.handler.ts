@@ -14,17 +14,24 @@ async function getPayPalAccessToken() {
     return tokenResponse.access_token;
 }
 
+async function calculateTotalCoins(amountVnd: number) {
+    const coinToVnd = await DBConfiguration.coinToVnd();
+    const amountCoins = amountVnd / coinToVnd;
+
+    const bonusCoinPer100000Vnd = await DBConfiguration.bonusCoinPer100000Vnd();
+    const bonusCoin = Math.floor(amountVnd / 100000) * bonusCoinPer100000Vnd;
+
+    return amountCoins + bonusCoin;
+}
+
 const createPayPalOrder: Handler<PaypalDto, { Body: CreatePayPalOrderDto }> = async (req, res) => {
     try {
         const accessToken = await getPayPalAccessToken();
 
         const amountVnd = req.body.amount;
-
         const amountDollar = await convertVNDtoUSD(amountVnd);
 
-        const coinToVnd = await DBConfiguration.coinToVnd();
-
-        const amountCoins = amountVnd / coinToVnd;
+        const totalCoin = await calculateTotalCoins(amountVnd);
 
         const orderDataJson = {
             intent: req.body.intent.toUpperCase(),
@@ -32,7 +39,7 @@ const createPayPalOrder: Handler<PaypalDto, { Body: CreatePayPalOrderDto }> = as
                 {
                     item: {
                         name: 'coin',
-                        quantity: `${amountCoins}`
+                        quantity: `${totalCoin}`
                     },
                     amount: {
                         currency_code: 'USD',
@@ -58,8 +65,6 @@ const completePayPalOrder: Handler<CompletePaypalDto, { Body: CompletePayPalOrde
     try {
         const accessToken = await getPayPalAccessToken();
 
-        const coinToVnd = await DBConfiguration.coinToVnd();
-
         const completeOrderResponse = await paypalService.completeOrder(
             `Bearer ${accessToken}`,
             req.body.orderId,
@@ -72,7 +77,7 @@ const completePayPalOrder: Handler<CompletePaypalDto, { Body: CompletePayPalOrde
 
         const amountVND = await convertUSDtoVND(amountUSD);
 
-        const amountCoins = amountVND / coinToVnd;
+        const totalCoin = await calculateTotalCoins(amountVND);
 
         if (completeOrderResponse.status === 'COMPLETED') {
             let retries = 0;
@@ -83,7 +88,7 @@ const completePayPalOrder: Handler<CompletePaypalDto, { Body: CompletePayPalOrde
                         where: { id: req.userId },
                         data: {
                             remain_coin: {
-                                increment: amountCoins
+                                increment: totalCoin
                             }
                         }
                     });
@@ -99,7 +104,7 @@ const completePayPalOrder: Handler<CompletePaypalDto, { Body: CompletePayPalOrde
             }
         }
 
-        return res.send({ id: completeOrderResponse.id, numCoin: amountCoins });
+        return res.send({ id: completeOrderResponse.id, numCoin: totalCoin });
     } catch (err) {
         logger.error(err);
         res.internalServerError();
