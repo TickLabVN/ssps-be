@@ -94,6 +94,10 @@ jobs:
             echo MINIO_BUCKET_NAME=${{ secrets.MINIO_BUCKET_NAME }} >> .env
             echo >> .env   
 
+            echo OPEN_EXCHANGE_RATES_ENDPOINT=${{ vars.OPEN_EXCHANGE_RATES_ENDPOINT }} >> .env
+            echo OPEN_EXCHANGE_RATES_APP_ID=${{ secrets.OPEN_EXCHANGE_RATES_APP_ID }} >> .env
+            echo >> .env
+
             echo CHECKOUT_ENVIRONMENT=${{ vars.CHECKOUT_ENVIRONMENT }} >> .env
             echo PAYPAL_LIVE_ENDPOINT=${{ vars.PAYPAL_LIVE_ENDPOINT }} >> .env
             echo PAYPAL_SANDBOX_ENDPOINT=${{ vars.PAYPAL_SANDBOX_ENDPOINT }} >> .env
