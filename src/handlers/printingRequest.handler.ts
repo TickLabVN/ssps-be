@@ -345,7 +345,8 @@ const uploadConfigToPrintingRequest: Handler<UploadConfigResultDto, { Params: Up
         await handleUploadingConfig(fileId, fileConfig);
 
         return res.status(200).send({
-            status: 'Configuration uploaded successfully'
+            status: 'Configuration uploaded successfully',
+            fileId
         });
     } catch (err) {
         res.badRequest(err.message);
@@ -427,7 +428,9 @@ const executePrintingRequest: Handler<PrintingFileResultDto, { Body: PrintingReq
             for (let i = 0; i < file.fileNum; i++) await printFileFromBuffer(nodePrinter, configurationBuffer);
         });
 
-        return res.status(200).send({ status: 'printing', message: 'The printing request is being executed' });
+        await prisma.printingRequest.update({ where: { id: printingRequestId }, data: { paid: 'paid' } });
+
+        return res.status(200).send({ status: 'printing', message: 'The printing request is being executed', printingRequestId });
     } catch (err) {
         logger.error(err);
         return res.status(500).send({ status: 'fail', message: err.message });
@@ -529,9 +532,11 @@ const deleteFilePrintingRequest: Handler<DeleteFilePrintingRequestResultDto, { P
 
 const cancelPrintingRequest: Handler<CancelPrintingRequestResultDto, { Params: PrintingRequestInputDto }> = async (req, res) => {
     try {
+        const printingRequestId = req.params.printingRequestId;
+
         const printingRequest = await prisma.printingRequest.findUnique({
             where: {
-                id: req.params.printingRequestId
+                id: printingRequestId
             }
         });
 
@@ -549,7 +554,7 @@ const cancelPrintingRequest: Handler<CancelPrintingRequestResultDto, { Params: P
 
         await prisma.printingRequest.update({
             where: {
-                id: req.params.printingRequestId
+                id: printingRequestId
             },
             data: {
                 status: PRINTING_STATUS.canceled
@@ -557,7 +562,8 @@ const cancelPrintingRequest: Handler<CancelPrintingRequestResultDto, { Params: P
         });
 
         return res.status(200).send({
-            printingStatus: PRINTING_STATUS.canceled
+            printingStatus: PRINTING_STATUS.canceled,
+            printingRequestId
         });
     } catch (err) {
         logger.error(err);
@@ -638,7 +644,8 @@ const filePrintNumberChangeRequest: Handler<FilePrintNumberChangeRequestResultDt
         });
 
         return res.status(200).send({
-            status: 'success'
+            status: 'success',
+            fileId
         });
     } catch (err) {
         logger.error(err);

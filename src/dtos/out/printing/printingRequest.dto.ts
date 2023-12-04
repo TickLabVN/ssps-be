@@ -39,11 +39,13 @@ export const DeleteFilePrintingRequestResultDto = Type.Object({
 });
 
 export const ExecutePrintingRequestResultDto = Type.Object({
-    PrintingStatus: Type.Enum(PRINTING_STATUS)
+    PrintingStatus: Type.Enum(PRINTING_STATUS),
+    printingRequestId: Type.String()
 });
 
 export const CancelPrintingRequestResultDto = Type.Object({
-    printingStatus: Type.Enum(PRINTING_STATUS)
+    printingStatus: Type.Enum(PRINTING_STATUS),
+    printingRequestId: Type.String()
 });
 
 export type GetPrintingRequestResultDto = Static<typeof GetPrintingRequestResultDto>;

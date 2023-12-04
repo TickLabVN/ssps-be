@@ -11,12 +11,14 @@ export const UploadFileResultDto = Type.Object({
 });
 
 export const UploadConfigResultDto = Type.Object({
-    status: Type.String()
+    status: Type.String(),
+    fileId: Type.String()
 });
 
 export const FilePrintNumberChangeRequestResultDto = Type.Object({
     status: Type.String(),
-    message: Type.Optional(Type.String())
+    message: Type.Optional(Type.String()),
+    fileId: Type.Optional(Type.String())
 });
 
 export type UploadFileResultDto = Static<typeof UploadFileResultDto>;
