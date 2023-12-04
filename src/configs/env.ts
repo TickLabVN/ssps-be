@@ -28,6 +28,8 @@ export const envs = cleanEnv(process.env, {
     PAYPAL_SANDBOX_ENDPOINT: url(),
     PAYPAL_CLIENT_ID: str(),
     PAYPAL_CLIENT_SECRET: str(),
+    OPEN_EXCHANGE_RATES_ENDPOINT: url(),
+    OPEN_EXCHANGE_RATES_APP_ID: str(),
     GOOGLE_CLIENT_ID: str({ default: 'anc' }),
     GOOGLE_CLIENT_SECRET: str(),
     GOOGLE_REDIRECT_URL: url(),
