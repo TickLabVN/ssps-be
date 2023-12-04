@@ -5,7 +5,8 @@ import {
     DEFAULT_COIN_PER_PAGE,
     DEFAULT_COIN_PER_SEM,
     DEFAULT_DOLLAR_TO_COIN,
-    DEFAULT_MAX_FILE_SIZE
+    DEFAULT_MAX_FILE_SIZE,
+    DEFAULT_SERVICE_FEE
 } from '@constants';
 import { logger } from '@utils';
 
@@ -15,11 +16,12 @@ const getAll: () => Promise<
     {
         name: string;
         value: string;
+        description: string;
     }[]
 > = async () => {
     try {
         const configurations = await prisma.configuration.findMany({
-            select: { name: true, value: true }
+            select: { name: true, value: true, description: true }
         });
         return configurations;
     } catch (error) {
@@ -128,4 +130,22 @@ const maxFileSize: () => Promise<number> = async () => {
     }
 };
 
-export const DBConfiguration = { acceptedExtensions, coinPerPage, coinPerSem, dollarToCoin, getAll, maxFileSize };
+const serviceFee: () => Promise<number> = async () => {
+    try {
+        const serviceFee = await prisma.configuration.findMany({
+            select: { value: true },
+            where: { name: 'service fee' }
+        });
+        if (serviceFee.length === 0) {
+            logger.warn(`No "service fee" configuration found. Using default value: ${DEFAULT_SERVICE_FEE} coins.`);
+            return DEFAULT_SERVICE_FEE;
+        }
+        const coinPerSem = Number(serviceFee[0]?.value);
+
+        return coinPerSem;
+    } catch (error) {
+        throw new Error('Failed to retrieve "max file size" configuration:', error);
+    }
+};
+
+export const DBConfiguration = { acceptedExtensions, coinPerPage, coinPerSem, dollarToCoin, getAll, maxFileSize, serviceFee };
