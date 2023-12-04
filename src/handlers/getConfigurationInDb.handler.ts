@@ -4,6 +4,7 @@ import {
     DEFAULT_ACCEPTED_EXTENSION,
     DEFAULT_COIN_PER_PAGE,
     DEFAULT_COIN_PER_SEM,
+    DEFAULT_COIN_TO_VND,
     DEFAULT_DOLLAR_TO_COIN,
     DEFAULT_MAX_FILE_SIZE,
     DEFAULT_SERVICE_FEE
@@ -112,6 +113,24 @@ const dollarToCoin: () => Promise<number> = async () => {
     }
 };
 
+const coinToVnd: () => Promise<number> = async () => {
+    try {
+        const coinToVndConfiguration = await prisma.configuration.findMany({
+            select: { value: true },
+            where: { name: 'coin to vnd' }
+        });
+        if (coinToVndConfiguration.length === 0) {
+            logger.warn(`No "coin to vnd" configuration found. Using default value: ${DEFAULT_COIN_TO_VND}.`);
+            return DEFAULT_DOLLAR_TO_COIN;
+        }
+        const coinPerSem = Number(coinToVndConfiguration[0]?.value);
+
+        return coinPerSem;
+    } catch (error) {
+        throw new Error('Failed to retrieve "coin to vnd" configuration:', error);
+    }
+};
+
 const maxFileSize: () => Promise<number> = async () => {
     try {
         const maxFileSizeConfiguration = await prisma.configuration.findMany({
@@ -144,8 +163,8 @@ const serviceFee: () => Promise<number> = async () => {
 
         return coinPerSem;
     } catch (error) {
-        throw new Error('Failed to retrieve "max file size" configuration:', error);
+        throw new Error('Failed to retrieve "service fee" configuration:', error);
     }
 };
 
-export const DBConfiguration = { acceptedExtensions, coinPerPage, coinPerSem, dollarToCoin, getAll, maxFileSize, serviceFee };
+export const DBConfiguration = { acceptedExtensions, coinPerPage, coinPerSem, dollarToCoin, coinToVnd, getAll, maxFileSize, serviceFee };

@@ -105,7 +105,6 @@ jobs:
 
             echo OPEN_EXCHANGE_RATES_ENDPOINT=${{ vars.OPEN_EXCHANGE_RATES_ENDPOINT }} >> .env
             echo OPEN_EXCHANGE_RATES_APP_ID=${{ secrets.OPEN_EXCHANGE_RATES_APP_ID }} >> .env
-            
             echo >> .env
 
             echo GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} >> .env

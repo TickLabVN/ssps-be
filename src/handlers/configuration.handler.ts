@@ -57,6 +57,7 @@ const getCoinPerSem: Handler<CoinPerSemDto> = async () => {
         throw err;
     }
 };
+
 const getDollarToCoin: Handler<DollarToCoinDto> = async () => {
     try {
         return await DBConfiguration.dollarToCoin();
@@ -65,6 +66,16 @@ const getDollarToCoin: Handler<DollarToCoinDto> = async () => {
         throw err;
     }
 };
+
+const getCoinToVnd: Handler<DollarToCoinDto> = async () => {
+    try {
+        return await DBConfiguration.coinToVnd();
+    } catch (err) {
+        logger.error('Error when getting coin to VND ratio configuration:', err);
+        throw err;
+    }
+};
+
 const getMaxFileSizeDto: Handler<MaxFileSizeDto> = async () => {
     try {
         return await DBConfiguration.maxFileSize();
@@ -106,5 +117,6 @@ export const configurationHandler = {
     getCoinPerPage,
     getCoinPerSem,
     getDollarToCoin,
+    getCoinToVnd,
     getMaxFileSizeDto
 };

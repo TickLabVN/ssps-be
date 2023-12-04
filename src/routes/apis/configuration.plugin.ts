@@ -4,6 +4,7 @@ import {
     AcceptedExtensionDto,
     CoinPerPageDto,
     CoinPerSemDto,
+    CoinToVNDDto,
     ConfigurationDto,
     DollarToCoinDto,
     MaxFileSizeDto,
@@ -87,9 +88,23 @@ export const configurationPlugin = createRoutes('Configuration', [
             description: '',
             response: {
                 200: DollarToCoinDto
-            }
+            },
+            deprecated: true
         },
         handler: configurationHandler.getDollarToCoin
+    },
+    {
+        method: 'GET',
+        url: '/coinToVnd',
+        roles: ['*'],
+        schema: {
+            summary: '',
+            description: '',
+            response: {
+                200: CoinToVNDDto
+            }
+        },
+        handler: configurationHandler.getCoinToVnd
     },
     {
         method: 'GET',
