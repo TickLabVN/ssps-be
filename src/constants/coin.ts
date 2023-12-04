@@ -1,2 +1,3 @@
 export const DEFAULT_DOLLAR_TO_COIN = 73;
 export const DEFAULT_COIN_TO_VND = 200;
+export const DEFAULT_BONUS_COIN_PER_100000_VND = 20;

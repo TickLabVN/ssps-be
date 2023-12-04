@@ -76,6 +76,15 @@ const getCoinToVnd: Handler<DollarToCoinDto> = async () => {
     }
 };
 
+const bonusCoinPer100000Vnd: Handler<DollarToCoinDto> = async () => {
+    try {
+        return await DBConfiguration.bonusCoinPer100000Vnd();
+    } catch (err) {
+        logger.error('Error when getting amount bonus coin per 100000 vnd configuration:', err);
+        throw err;
+    }
+};
+
 const getMaxFileSizeDto: Handler<MaxFileSizeDto> = async () => {
     try {
         return await DBConfiguration.maxFileSize();
@@ -118,5 +127,6 @@ export const configurationHandler = {
     getCoinPerSem,
     getDollarToCoin,
     getCoinToVnd,
+    bonusCoinPer100000Vnd,
     getMaxFileSizeDto
 };

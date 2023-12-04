@@ -2,6 +2,7 @@ import NodeCache from 'node-cache';
 import { prisma } from '@repositories';
 import {
     DEFAULT_ACCEPTED_EXTENSION,
+    DEFAULT_BONUS_COIN_PER_100000_VND,
     DEFAULT_COIN_PER_PAGE,
     DEFAULT_COIN_PER_SEM,
     DEFAULT_COIN_TO_VND,
@@ -121,13 +122,31 @@ const coinToVnd: () => Promise<number> = async () => {
         });
         if (coinToVndConfiguration.length === 0) {
             logger.warn(`No "coin to vnd" configuration found. Using default value: ${DEFAULT_COIN_TO_VND}.`);
-            return DEFAULT_DOLLAR_TO_COIN;
+            return DEFAULT_COIN_TO_VND;
         }
         const coinPerSem = Number(coinToVndConfiguration[0]?.value);
 
         return coinPerSem;
     } catch (error) {
         throw new Error('Failed to retrieve "coin to vnd" configuration:', error);
+    }
+};
+
+const bonusCoinPer100000Vnd: () => Promise<number> = async () => {
+    try {
+        const bonusCoinPer100000VndConfiguration = await prisma.configuration.findMany({
+            select: { value: true },
+            where: { name: 'bonus coin per 100000 vnd' }
+        });
+        if (bonusCoinPer100000VndConfiguration.length === 0) {
+            logger.warn(`No "bonus coin per 100000 vnd" configuration found. Using default value: ${DEFAULT_BONUS_COIN_PER_100000_VND}.`);
+            return DEFAULT_BONUS_COIN_PER_100000_VND;
+        }
+        const bonusCoinPer100000Vnd = Number(bonusCoinPer100000VndConfiguration[0]?.value);
+
+        return bonusCoinPer100000Vnd;
+    } catch (error) {
+        throw new Error('Failed to retrieve "bonus coin per 100000 vnd" configuration:', error);
     }
 };
 
@@ -167,4 +186,14 @@ const serviceFee: () => Promise<number> = async () => {
     }
 };
 
-export const DBConfiguration = { acceptedExtensions, coinPerPage, coinPerSem, dollarToCoin, coinToVnd, getAll, maxFileSize, serviceFee };
+export const DBConfiguration = {
+    acceptedExtensions,
+    coinPerPage,
+    coinPerSem,
+    dollarToCoin,
+    coinToVnd,
+    bonusCoinPer100000Vnd,
+    getAll,
+    maxFileSize,
+    serviceFee
+};

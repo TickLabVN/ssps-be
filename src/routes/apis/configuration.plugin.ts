@@ -2,6 +2,7 @@ import { USER_ROLES } from '@constants';
 import { updateAcceptedExtensionDto } from '@dtos/in';
 import {
     AcceptedExtensionDto,
+    BonusCoinPer100000VndDto,
     CoinPerPageDto,
     CoinPerSemDto,
     CoinToVNDDto,
@@ -105,6 +106,19 @@ export const configurationPlugin = createRoutes('Configuration', [
             }
         },
         handler: configurationHandler.getCoinToVnd
+    },
+    {
+        method: 'GET',
+        url: '/bonusCoinPer100000Vnd',
+        roles: ['*'],
+        schema: {
+            summary: '',
+            description: '',
+            response: {
+                200: BonusCoinPer100000VndDto
+            }
+        },
+        handler: configurationHandler.bonusCoinPer100000Vnd
     },
     {
         method: 'GET',
