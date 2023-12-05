@@ -75,7 +75,11 @@ const completePayPalOrder: Handler<CompletePaypalDto, { Body: CompletePayPalOrde
             completeOrderResponse.purchase_units ? completeOrderResponse.purchase_units[0].payments.captures[0].amount.value : 0
         );
 
-        const amountVND = await convertUSDtoVND(amountUSD);
+        logger.error(amountUSD);
+
+        const amountVND = Math.round(await convertUSDtoVND(amountUSD));
+
+        logger.error(amountVND);
 
         const totalCoin = await calculateTotalCoins(amountVND);
 
