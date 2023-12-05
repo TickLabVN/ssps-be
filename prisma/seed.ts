@@ -76,7 +76,7 @@ const createStudent = async () => {
     const students: Student[] = studentUser.map((user) => {
         return {
             default_coin_per_sem: 100,
-            remain_coin: 5000,
+            remain_coin: 50,
             id: user.id
         };
     });

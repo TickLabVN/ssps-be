@@ -27,6 +27,21 @@ import { MultipartFile } from '@fastify/multipart';
 import pdf from 'pdf-parse';
 import { DBConfiguration } from '@handlers';
 
+/**
+ * Get the number of pages in a PDF file.
+ * @param {Buffer} file - The PDF file buffer.
+ * @returns {Promise<number>} The number of pages in the PDF file.
+ * @throws {Error} If an error occurs while parsing the PDF or if the file is not a valid PDF.
+ */
+const getNumPages = async (file: Buffer) => {
+    try {
+        const data = await pdf(file);
+        return data.numpages;
+    } catch (err) {
+        throw new Error(`Failed to get the number of pages in the PDF: ${err}`);
+    }
+};
+
 const getAllPrintingRequest: Handler<GetPrintingRequestResultDto> = async (req) => {
     const userId = req.userId;
 
@@ -185,6 +200,30 @@ const handleUploadingFile = async (printingRequestId: string, file: Buffer, file
     }
 };
 
+/**
+ *
+ * @param file
+ * @param newConfig
+ * @returns The object include amount page and coins of a new file with new config
+ */
+const calculateNewAmountPageAndCoins = async (fileMinioName: string, newConfig: UploadConfigBodyDto) => {
+    const fileBuffer = await minio.getFileFromMinio(fileMinioName);
+
+    const configurationFileBuffer = await editPdf.editPdfPrinting(
+        fileBuffer,
+        newConfig.pageSide,
+        newConfig.pages,
+        newConfig.layout,
+        Number(newConfig.pagesPerSheet) as PagePerSheet
+    );
+
+    const newAmountPages = await getNumPages(configurationFileBuffer);
+
+    const newAmountCoins = newAmountPages * (await DBConfiguration.coinPerPage());
+
+    return { newAmountPages, newAmountCoins };
+};
+
 const handleUploadingConfig = async (fileId: string, config: UploadConfigBodyDto) => {
     try {
         const file = await prisma.file.findUnique({
@@ -192,36 +231,49 @@ const handleUploadingConfig = async (fileId: string, config: UploadConfigBodyDto
                 id: fileId
             }
         });
-
         if (!file) throw new Error(`File ${fileId} doesn't exist`);
+        const minioName = file.minioName;
+
+        const newAmountCopies = config.numOfCopies;
+        const { newAmountCoins, newAmountPages } = await calculateNewAmountPageAndCoins(minioName, config);
+
+        const oldTotalCoin = file.fileNum * file.fileCoin;
+        const oldTotalPage = file.fileNum * file.numPage;
+        const newTotalCoin = newAmountCopies * newAmountCoins;
+        const newTotalPage = newAmountCopies * newAmountPages;
+        const totalCoinDifferent = newTotalCoin - oldTotalCoin;
+        const totalPageDifferent = newTotalPage - oldTotalPage;
 
         const configJSON = JSON.stringify(config);
         const configBuffer = Buffer.from(configJSON);
+        const configName = convertFileNameToConfigFileName(minioName);
 
         await prisma.$transaction(async () => {
-            const oldAmountPrinting = file.fileNum;
-
-            const increaseFactor = config.numOfCopies - oldAmountPrinting;
-
             await prisma.file.update({
                 where: {
                     id: fileId
                 },
                 data: {
-                    fileNum: config.numOfCopies
+                    fileNum: newAmountCopies,
+                    fileCoin: newAmountCoins,
+                    numPage: newAmountPages
                 }
             });
 
-            if (increaseFactor !== 0) {
+            if (totalCoinDifferent !== 0) {
                 await prisma.printingRequest.update({
                     where: { id: file.printingRequestId },
                     data: {
-                        coins: { [increaseFactor > 0 ? 'increment' : 'decrement']: Math.abs(increaseFactor) * file.fileCoin },
-                        numPages: { [increaseFactor > 0 ? 'increment' : 'decrement']: Math.abs(increaseFactor) * file.numPage }
+                        coins: {
+                            [totalCoinDifferent > 0 ? 'increment' : 'decrement']: Math.abs(totalCoinDifferent)
+                        },
+                        numPages: {
+                            [totalPageDifferent > 0 ? 'increment' : 'decrement']: Math.abs(totalPageDifferent)
+                        }
                     }
                 });
             }
-            const configName = convertFileNameToConfigFileName(file.minioName);
+
             await removeConfigInMinio(file);
 
             await minio.uploadFileToMinio(configName, configBuffer);
@@ -230,21 +282,6 @@ const handleUploadingConfig = async (fileId: string, config: UploadConfigBodyDto
         return;
     } catch (error) {
         throw new Error(`Update config ${fileId} failed: ${error.message}`);
-    }
-};
-
-/**
- * Get the number of pages in a PDF file.
- * @param {Buffer} file - The PDF file buffer.
- * @returns {Promise<number>} The number of pages in the PDF file.
- * @throws {Error} If an error occurs while parsing the PDF or if the file is not a valid PDF.
- */
-const getNumPages = async (file: Buffer) => {
-    try {
-        const data = await pdf(file);
-        return data.numpages;
-    } catch (err) {
-        throw new Error(`Failed to get the number of pages in the PDF: ${err}`);
     }
 };
 
@@ -391,7 +428,7 @@ const executePrintingRequest: Handler<PrintingFileResultDto, { Body: PrintingReq
         const printingRequestId = req.body.printingRequestId;
 
         const [printingRequest, student] = await Promise.all([
-            prisma.printingRequest.findFirst({ where: { id: printingRequestId }, select: { coins: true } }),
+            prisma.printingRequest.findFirst({ where: { id: printingRequestId }, select: { coins: true, serviceFee: true } }),
             prisma.student.findFirst({ where: { id: userId }, select: { remain_coin: true } })
         ]);
 
@@ -404,7 +441,7 @@ const executePrintingRequest: Handler<PrintingFileResultDto, { Body: PrintingReq
             return res.badRequest('This endpoint is only accessible to students.');
         }
 
-        const requireCoins = printingRequest.coins;
+        const requireCoins = printingRequest.coins + printingRequest.serviceFee;
 
         if (requireCoins > student.remain_coin) {
             return res.badRequest("User doesn't have enough coins to execute the printing request");
