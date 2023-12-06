@@ -404,7 +404,7 @@ const uploadConfigToPrintingRequest: Handler<UploadConfigResultDto, { Params: Up
 
 const printFileFromBuffer = async (printer: Printer, fileBuffer: Buffer) => {
     try {
-        await printer.print(fileBuffer, 'AUTO', 'Canon_MF3010_3');
+        await printer.print(fileBuffer, 'AUTO');
     } catch (err) {
         throw err;
     }
@@ -463,20 +463,22 @@ const executePrintingRequest: Handler<PrintingFileResultDto, { Body: PrintingReq
         await prisma.student.update({ where: { id: userId }, data: { remain_coin: { decrement: requireCoins } } });
 
         const filesOfPrintingRequest = await getFilesOfPrintingRequest(printingRequestId);
-        filesOfPrintingRequest.forEach(async (file) => {
-            const buffer = await minio.getFileFromMinio(file.minioName);
-            const config = await getConfigOfFile(file.minioName);
+        for (const file of filesOfPrintingRequest) {
+            {
+                const buffer = await minio.getFileFromMinio(file.minioName);
+                const config = await getConfigOfFile(file.minioName);
 
-            const configurationBuffer = await editPdf.editPdfPrinting(
-                buffer,
-                config.pageSide,
-                config.pages,
-                config.layout,
-                Number(config.pagesPerSheet) as PagePerSheet
-            );
+                const configurationBuffer = await editPdf.editPdfPrinting(
+                    buffer,
+                    config.pageSide,
+                    config.pages,
+                    config.layout,
+                    Number(config.pagesPerSheet) as PagePerSheet
+                );
 
-            for (let i = 0; i < file.fileNum; i++) await printFileFromBuffer(nodePrinter, configurationBuffer);
-        });
+                for (let i = 0; i < file.fileNum; i++) await printFileFromBuffer(nodePrinter, configurationBuffer);
+            }
+        }
 
         await prisma.printingRequest.update({ where: { id: printingRequestId }, data: { paid: 'paid' } });
 
