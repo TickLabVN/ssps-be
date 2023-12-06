@@ -404,7 +404,7 @@ const uploadConfigToPrintingRequest: Handler<UploadConfigResultDto, { Params: Up
 
 const printFileFromBuffer = async (printer: Printer, fileBuffer: Buffer) => {
     try {
-        await printer.print(fileBuffer, 'AUTO', 'Canon_MF3010_3');
+        await printer.print(fileBuffer, 'AUTO');
     } catch (err) {
         throw err;
     }
