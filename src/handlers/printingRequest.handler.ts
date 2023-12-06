@@ -476,7 +476,8 @@ const executePrintingRequest: Handler<PrintingFileResultDto, { Body: PrintingReq
                     Number(config.pagesPerSheet) as PagePerSheet
                 );
 
-                for (let i = 0; i < file.fileNum; i++) await printFileFromBuffer(nodePrinter, configurationBuffer);
+                if (envs.NODE_ENV === 'development')
+                    for (let i = 0; i < file.fileNum; i++) await printFileFromBuffer(nodePrinter, configurationBuffer);
             }
         }
 
