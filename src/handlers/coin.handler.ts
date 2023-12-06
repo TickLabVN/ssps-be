@@ -30,6 +30,8 @@ const createPayPalOrder: Handler<PaypalDto, { Body: CreatePayPalOrderDto }> = as
 
         const amountVnd = req.body.amount;
         const amountDollar = await convertVNDtoUSD(amountVnd);
+        //Papal only accept two decimal places
+        const roundedAmountDollar = parseFloat(amountDollar.toFixed(2));
 
         const totalCoin = await calculateTotalCoins(amountVnd);
 
@@ -43,7 +45,7 @@ const createPayPalOrder: Handler<PaypalDto, { Body: CreatePayPalOrderDto }> = as
                     },
                     amount: {
                         currency_code: 'USD',
-                        value: amountDollar.toString()
+                        value: roundedAmountDollar.toString()
                     }
                 }
             ]
