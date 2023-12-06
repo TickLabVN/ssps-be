@@ -24,7 +24,7 @@ COPY package.json ./dist/
 FROM node:${NODE_VERSION}-alpine as production
 WORKDIR /app
 
-RUN apk --no-cache add python3 cups-dev
+RUN apk --no-cache add python3 cups-dev printer-driver-cups-pdf
 
 ENV NODE_ENV=production
 
