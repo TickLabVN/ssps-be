@@ -4,7 +4,7 @@ import { degrees, PDFDocument } from 'pdf-lib';
 // export type PageSide = 'one' | 'both';
 // export type EdgeBinding = 'long' | 'short';
 // export type PageSideEdge = 'one' | EdgeBinding;
-// export type KeepPages = 'all' | 'odd' | 'even' | string[];
+// export type KeepPages = 'all' | 'odd' | 'even' | string;
 // export type Orientation = 'portrait' | 'landscape';
 // export type PagePerSheet = 1 | 2 | 4 | 6 | 9 | 16;
 
@@ -258,5 +258,20 @@ const editPdfPrinting = async (
 
     return withPageSide;
 };
+
+// const testFunction = async () => {
+//     const rootPath = process.cwd();
+//     const inputPath = path.join(rootPath, 'pdf/in/file.pdf');
+//     const outputPath = path.join(rootPath, 'pdf/out/file.pdf');
+
+//     const pdfBuffer = await fs.readFile(inputPath);
+
+//     const modifiedPdfBuffer = await editPdfPrinting(pdfBuffer, 'long', '1', 'portrait', 1);
+
+//     await fs.writeFile(outputPath, modifiedPdfBuffer);
+//     logger.info('done');
+// };
+
+// testFunction();
 
 export const editPdf = { setPageSide, setKeepPages, convertToPortraitOrLandscape, setTwoSideShortLongEdge, editPdfPrinting };

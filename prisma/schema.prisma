@@ -55,6 +55,7 @@ model File {
   id                String          @id @default(cuid())
   realName          String
   minioName         String          @unique
+  previewMinioName  String?
   printingRequest   PrintingRequest @relation(fields: [printingRequestId], references: [id])
   printingRequestId String
   numPage           Int             @default(0)
