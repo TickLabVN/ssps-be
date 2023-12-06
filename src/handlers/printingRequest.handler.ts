@@ -206,17 +206,7 @@ const handleUploadingFile = async (printingRequestId: string, file: Buffer, file
  * @param newConfig
  * @returns The object include amount page and coins of a new file with new config
  */
-const calculateNewAmountPageAndCoins = async (fileMinioName: string, newConfig: UploadConfigBodyDto) => {
-    const fileBuffer = await minio.getFileFromMinio(fileMinioName);
-
-    const configurationFileBuffer = await editPdf.editPdfPrinting(
-        fileBuffer,
-        newConfig.pageSide,
-        newConfig.pages,
-        newConfig.layout,
-        Number(newConfig.pagesPerSheet) as PagePerSheet
-    );
-
+const calculateNewAmountPageAndCoins = async (configurationFileBuffer: Buffer) => {
     const newAmountPages = await getNumPages(configurationFileBuffer);
 
     const newAmountCoins = newAmountPages * (await DBConfiguration.coinPerPage());
@@ -225,6 +215,13 @@ const calculateNewAmountPageAndCoins = async (fileMinioName: string, newConfig: 
 };
 
 const handleUploadingConfig = async (fileId: string, config: UploadConfigBodyDto) => {
+    function addPreviewToFileName(fileName: string) {
+        const parts = fileName.split('.');
+        const extension = parts.pop();
+        const baseName = parts.join('.');
+        const previewFileName = `${baseName}-preview.${extension}`;
+        return previewFileName;
+    }
     try {
         const file = await prisma.file.findUnique({
             where: {
@@ -234,8 +231,18 @@ const handleUploadingConfig = async (fileId: string, config: UploadConfigBodyDto
         if (!file) throw new Error(`File ${fileId} doesn't exist`);
         const minioName = file.minioName;
 
+        const fileBuffer = await minio.getFileFromMinio(file.minioName);
+
+        const configurationFileBuffer = await editPdf.editPdfPrinting(
+            fileBuffer,
+            config.pageSide,
+            config.pages,
+            config.layout,
+            Number(config.pagesPerSheet) as PagePerSheet
+        );
+
         const newAmountCopies = config.numOfCopies;
-        const { newAmountCoins, newAmountPages } = await calculateNewAmountPageAndCoins(minioName, config);
+        const { newAmountCoins, newAmountPages } = await calculateNewAmountPageAndCoins(configurationFileBuffer);
 
         const oldTotalCoin = file.fileNum * file.fileCoin;
         const oldTotalPage = file.fileNum * file.numPage;
@@ -248,6 +255,8 @@ const handleUploadingConfig = async (fileId: string, config: UploadConfigBodyDto
         const configBuffer = Buffer.from(configJSON);
         const configName = convertFileNameToConfigFileName(minioName);
 
+        const previewFileName = addPreviewToFileName(file.minioName);
+
         await prisma.$transaction(async () => {
             await prisma.file.update({
                 where: {
@@ -256,7 +265,8 @@ const handleUploadingConfig = async (fileId: string, config: UploadConfigBodyDto
                 data: {
                     fileNum: newAmountCopies,
                     fileCoin: newAmountCoins,
-                    numPage: newAmountPages
+                    numPage: newAmountPages,
+                    previewMinioName: previewFileName
                 }
             });
 
@@ -275,6 +285,8 @@ const handleUploadingConfig = async (fileId: string, config: UploadConfigBodyDto
             }
 
             await removeConfigInMinio(file);
+
+            await minio.uploadFileToMinio(previewFileName, configurationFileBuffer);
 
             await minio.uploadFileToMinio(configName, configBuffer);
         });
@@ -392,7 +404,7 @@ const uploadConfigToPrintingRequest: Handler<UploadConfigResultDto, { Params: Up
 
 const printFileFromBuffer = async (printer: Printer, fileBuffer: Buffer) => {
     try {
-        await printer.print(fileBuffer, 'AUTO', 'PDF');
+        await printer.print(fileBuffer, 'AUTO', 'Canon_MF3010_3');
     } catch (err) {
         throw err;
     }
@@ -406,6 +418,7 @@ const getFilesOfPrintingRequest = async (printingRequestId: string) => {
         select: {
             id: true,
             minioName: true,
+            previewMinioName: true,
             realName: true,
             fileCoin: true,
             fileSize: true,
@@ -484,7 +497,7 @@ const getAllFilesPrintingRequest: Handler<AllFilesPrintingRequestResultDto, { Pa
                 fileName: item.realName,
                 fileCoin: item.fileCoin,
                 fileSize: item.fileSize,
-                fileURL: `${envs.MINIO_URL}/${envs.MINIO_BUCKET_NAME}/${item.minioName}`,
+                fileURL: `${envs.MINIO_URL}/${envs.MINIO_BUCKET_NAME}/${item.previewMinioName}`,
                 numPage: item.numPage,
                 numOfCopies: item.fileNum
             };

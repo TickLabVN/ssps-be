@@ -18,7 +18,7 @@ export const configurationPlugin = createRoutes('Configuration', [
     {
         method: 'GET',
         url: '/',
-        roles: ['*'],
+        roles: [USER_ROLES.admin],
         schema: {
             summary: 'Get list configurations',
             description: 'Get all current name and value of configurations',
