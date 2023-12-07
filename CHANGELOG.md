@@ -1,5 +1,38 @@
 # Changelog
 
+## [2.0.0](https://github.com/TickLabVN/ssps-be/compare/v1.0.0...v2.0.0) (2023-12-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **paypal:** Switches the immediate unit of coin from USD to VND
+* **execute printing request:** executing a printing request is now restricted to students only
+
+### Features
+
+* **coin:** add bonus coin for each 100,000 VND base on configurarion ([c53bef4](https://github.com/TickLabVN/ssps-be/commit/c53bef4bf247631e721a3c3e78a6f0c0b3dc72f7))
+* **coin:** implement new handler and API dor bonusCoinPer100000VND configuration ([78b5f60](https://github.com/TickLabVN/ssps-be/commit/78b5f60630d4e29749084bd4d708b9c0de595d53))
+* **coin:** implement new handler and API for coin to VND configuration ([b2edfad](https://github.com/TickLabVN/ssps-be/commit/b2edfad126b3f82934176ba8e746efb1eba173bb))
+* **configuration printing:** save file after approving configuration on Minio for preview ([f3a0a35](https://github.com/TickLabVN/ssps-be/commit/f3a0a35c9a8a8389225d8bff26da237f45bfa296))
+* **configuration:** implement serving fee configuration and missing get configuration APIs ([456d240](https://github.com/TickLabVN/ssps-be/commit/456d2404713c51e2328b594d67349cb45e048d5b))
+
+
+### Bug Fixes
+
+* **coin:** convert from amount VND to USD rounded to two decimal places ([8466bcf](https://github.com/TickLabVN/ssps-be/commit/8466bcfd4b23d8b17868b76557c3ea043028149d))
+* **coin:** round VND conversion from USD to avoid missing bonus coin ([4f8d8f3](https://github.com/TickLabVN/ssps-be/commit/4f8d8f32370bae769a282879ca6efad47bb49247))
+* **execute printing request:** decrease appropriate user's remain coins base on printing request ([83074d2](https://github.com/TickLabVN/ssps-be/commit/83074d279e1176cc5a97c49cfdeafb8b7bd08079))
+* **permission:** change permission of get configuration APIs to be accessible by all roles ([56b1ac6](https://github.com/TickLabVN/ssps-be/commit/56b1ac63b3c0facefa8a3037c922653c387b2fb1))
+* **printer:** let CUPS choose a printer ([7073e3d](https://github.com/TickLabVN/ssps-be/commit/7073e3d160156ff2b3542cd6f35ac9b40dba0b44))
+* **printing request:** adjust coins and pages with changes in amount of pages when config changes ([6968c22](https://github.com/TickLabVN/ssps-be/commit/6968c22a8282e91a0e6767b9426a034d30afc596))
+* **printing:** change synchronize handler of execute printing request to use a for loop ([68495ae](https://github.com/TickLabVN/ssps-be/commit/68495ae7d26dabe8d964113923561c02aaa8ec9b))
+* **printing:** send only buffer to printer in development environment ([7d0a346](https://github.com/TickLabVN/ssps-be/commit/7d0a346de5a7ce4d5100084877cf1cee01f3f19a))
+
+
+### Code Refactoring
+
+* **paypal:** change amount of create PayPal Order to VND; use VND as immediate unit of coin ([cd79516](https://github.com/TickLabVN/ssps-be/commit/cd79516923eb215497768d6bbf96558dc26c72c5))
+
 ## 1.0.0 (2023-12-03)
 
 
