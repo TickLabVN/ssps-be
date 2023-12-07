@@ -5,7 +5,7 @@ import { CompletePaypalDto, PaypalDto } from '@dtos/out';
 import { Handler } from '@interfaces';
 import { prisma } from '@repositories';
 import { paypalService } from '@services';
-import { logger } from '@utils';
+import { convertUSDtoVND, convertVNDtoUSD, logger } from '@utils';
 import { DBConfiguration } from './getConfigurationInDb.handler';
 
 async function getPayPalAccessToken() {
@@ -14,11 +14,26 @@ async function getPayPalAccessToken() {
     return tokenResponse.access_token;
 }
 
+async function calculateTotalCoins(amountVnd: number) {
+    const coinToVnd = await DBConfiguration.coinToVnd();
+    const amountCoins = amountVnd / coinToVnd;
+
+    const bonusCoinPer100000Vnd = await DBConfiguration.bonusCoinPer100000Vnd();
+    const bonusCoin = Math.floor(amountVnd / 100000) * bonusCoinPer100000Vnd;
+
+    return amountCoins + bonusCoin;
+}
+
 const createPayPalOrder: Handler<PaypalDto, { Body: CreatePayPalOrderDto }> = async (req, res) => {
     try {
         const accessToken = await getPayPalAccessToken();
 
-        const dollarToCoin = await DBConfiguration.dollarToCoin();
+        const amountVnd = req.body.amount;
+        const amountDollar = await convertVNDtoUSD(amountVnd);
+        //Papal only accept two decimal places
+        const roundedAmountDollar = parseFloat(amountDollar.toFixed(2));
+
+        const totalCoin = await calculateTotalCoins(amountVnd);
 
         const orderDataJson = {
             intent: req.body.intent.toUpperCase(),
@@ -26,11 +41,11 @@ const createPayPalOrder: Handler<PaypalDto, { Body: CreatePayPalOrderDto }> = as
                 {
                     item: {
                         name: 'coin',
-                        quantity: `${req.body.amount * dollarToCoin}`
+                        quantity: `${totalCoin}`
                     },
                     amount: {
                         currency_code: 'USD',
-                        value: req.body.amount.toString()
+                        value: roundedAmountDollar.toString()
                     }
                 }
             ]
@@ -52,18 +67,23 @@ const completePayPalOrder: Handler<CompletePaypalDto, { Body: CompletePayPalOrde
     try {
         const accessToken = await getPayPalAccessToken();
 
-        const dollarToCoin = await DBConfiguration.dollarToCoin();
-
         const completeOrderResponse = await paypalService.completeOrder(
             `Bearer ${accessToken}`,
             req.body.orderId,
             req.body.intent.toLowerCase()
         );
 
-        const amountMoney = Number(
+        const amountUSD = Number(
             completeOrderResponse.purchase_units ? completeOrderResponse.purchase_units[0].payments.captures[0].amount.value : 0
         );
-        const numCoin = amountMoney * dollarToCoin;
+
+        logger.error(amountUSD);
+
+        const amountVND = Math.round(await convertUSDtoVND(amountUSD));
+
+        logger.error(amountVND);
+
+        const totalCoin = await calculateTotalCoins(amountVND);
 
         if (completeOrderResponse.status === 'COMPLETED') {
             let retries = 0;
@@ -74,7 +94,7 @@ const completePayPalOrder: Handler<CompletePaypalDto, { Body: CompletePayPalOrde
                         where: { id: req.userId },
                         data: {
                             remain_coin: {
-                                increment: numCoin
+                                increment: totalCoin
                             }
                         }
                     });
@@ -90,7 +110,7 @@ const completePayPalOrder: Handler<CompletePaypalDto, { Body: CompletePayPalOrde
             }
         }
 
-        return res.send({ id: completeOrderResponse.id, numCoin });
+        return res.send({ id: completeOrderResponse.id, numCoin: totalCoin });
     } catch (err) {
         logger.error(err);
         res.internalServerError();

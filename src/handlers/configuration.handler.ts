@@ -1,5 +1,13 @@
 import { updateAcceptedExtensionDto } from '@dtos/in';
-import { AcceptedExtensionDto, ConfigurationDto } from '@dtos/out';
+import {
+    AcceptedExtensionDto,
+    CoinPerPageDto,
+    CoinPerSemDto,
+    ConfigurationDto,
+    DollarToCoinDto,
+    MaxFileSizeDto,
+    ServiceFeeDto
+} from '@dtos/out';
 import { DBConfiguration } from '@handlers';
 import { Handler } from '@interfaces';
 import { prisma } from '@repositories';
@@ -19,6 +27,69 @@ const getAcceptedExtension: Handler<AcceptedExtensionDto> = async () => {
         return await DBConfiguration.acceptedExtensions();
     } catch (err) {
         logger.error('Error when getting accepted extension configuration:', err);
+        throw err;
+    }
+};
+
+const getServiceFee: Handler<ServiceFeeDto> = async () => {
+    try {
+        return await DBConfiguration.serviceFee();
+    } catch (err) {
+        logger.error('Error when getting service fee configuration:', err);
+        throw err;
+    }
+};
+
+const getCoinPerPage: Handler<CoinPerPageDto> = async () => {
+    try {
+        return await DBConfiguration.coinPerPage();
+    } catch (err) {
+        logger.error('Error when getting coin per page configuration:', err);
+        throw err;
+    }
+};
+
+const getCoinPerSem: Handler<CoinPerSemDto> = async () => {
+    try {
+        return await DBConfiguration.coinPerSem();
+    } catch (err) {
+        logger.error('Error when getting coin per semester configuration:', err);
+        throw err;
+    }
+};
+
+const getDollarToCoin: Handler<DollarToCoinDto> = async () => {
+    try {
+        return await DBConfiguration.dollarToCoin();
+    } catch (err) {
+        logger.error('Error when getting 1 dollar to coin ratio configuration:', err);
+        throw err;
+    }
+};
+
+const getCoinToVnd: Handler<DollarToCoinDto> = async () => {
+    try {
+        return await DBConfiguration.coinToVnd();
+    } catch (err) {
+        logger.error('Error when getting coin to VND ratio configuration:', err);
+        throw err;
+    }
+};
+
+const bonusCoinPer100000Vnd: Handler<DollarToCoinDto> = async () => {
+    try {
+        return await DBConfiguration.bonusCoinPer100000Vnd();
+    } catch (err) {
+        logger.error('Error when getting amount bonus coin per 100000 vnd configuration:', err);
+        throw err;
+    }
+};
+
+const getMaxFileSizeDto: Handler<MaxFileSizeDto> = async () => {
+    try {
+        return await DBConfiguration.maxFileSize();
+    } catch (err) {
+        logger.error('Error when getting max file size configuration:', err);
         throw err;
     }
 };
@@ -50,5 +121,12 @@ const updateAcceptedExtension: Handler<AcceptedExtensionDto, { Body: updateAccep
 export const configurationHandler = {
     getAcceptedExtension,
     getConfigurations,
-    updateAcceptedExtension
+    updateAcceptedExtension,
+    getServiceFee,
+    getCoinPerPage,
+    getCoinPerSem,
+    getDollarToCoin,
+    getCoinToVnd,
+    bonusCoinPer100000Vnd,
+    getMaxFileSizeDto
 };

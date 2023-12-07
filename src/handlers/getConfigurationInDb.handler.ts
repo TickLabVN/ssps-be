@@ -2,10 +2,13 @@ import NodeCache from 'node-cache';
 import { prisma } from '@repositories';
 import {
     DEFAULT_ACCEPTED_EXTENSION,
+    DEFAULT_BONUS_COIN_PER_100000_VND,
     DEFAULT_COIN_PER_PAGE,
     DEFAULT_COIN_PER_SEM,
+    DEFAULT_COIN_TO_VND,
     DEFAULT_DOLLAR_TO_COIN,
-    DEFAULT_MAX_FILE_SIZE
+    DEFAULT_MAX_FILE_SIZE,
+    DEFAULT_SERVICE_FEE
 } from '@constants';
 import { logger } from '@utils';
 
@@ -15,11 +18,12 @@ const getAll: () => Promise<
     {
         name: string;
         value: string;
+        description: string;
     }[]
 > = async () => {
     try {
         const configurations = await prisma.configuration.findMany({
-            select: { name: true, value: true }
+            select: { name: true, value: true, description: true }
         });
         return configurations;
     } catch (error) {
@@ -110,6 +114,42 @@ const dollarToCoin: () => Promise<number> = async () => {
     }
 };
 
+const coinToVnd: () => Promise<number> = async () => {
+    try {
+        const coinToVndConfiguration = await prisma.configuration.findMany({
+            select: { value: true },
+            where: { name: 'coin to vnd' }
+        });
+        if (coinToVndConfiguration.length === 0) {
+            logger.warn(`No "coin to vnd" configuration found. Using default value: ${DEFAULT_COIN_TO_VND}.`);
+            return DEFAULT_COIN_TO_VND;
+        }
+        const coinPerSem = Number(coinToVndConfiguration[0]?.value);
+
+        return coinPerSem;
+    } catch (error) {
+        throw new Error('Failed to retrieve "coin to vnd" configuration:', error);
+    }
+};
+
+const bonusCoinPer100000Vnd: () => Promise<number> = async () => {
+    try {
+        const bonusCoinPer100000VndConfiguration = await prisma.configuration.findMany({
+            select: { value: true },
+            where: { name: 'bonus coin per 100000 vnd' }
+        });
+        if (bonusCoinPer100000VndConfiguration.length === 0) {
+            logger.warn(`No "bonus coin per 100000 vnd" configuration found. Using default value: ${DEFAULT_BONUS_COIN_PER_100000_VND}.`);
+            return DEFAULT_BONUS_COIN_PER_100000_VND;
+        }
+        const bonusCoinPer100000Vnd = Number(bonusCoinPer100000VndConfiguration[0]?.value);
+
+        return bonusCoinPer100000Vnd;
+    } catch (error) {
+        throw new Error('Failed to retrieve "bonus coin per 100000 vnd" configuration:', error);
+    }
+};
+
 const maxFileSize: () => Promise<number> = async () => {
     try {
         const maxFileSizeConfiguration = await prisma.configuration.findMany({
@@ -128,4 +168,32 @@ const maxFileSize: () => Promise<number> = async () => {
     }
 };
 
-export const DBConfiguration = { acceptedExtensions, coinPerPage, coinPerSem, dollarToCoin, getAll, maxFileSize };
+const serviceFee: () => Promise<number> = async () => {
+    try {
+        const serviceFee = await prisma.configuration.findMany({
+            select: { value: true },
+            where: { name: 'service fee' }
+        });
+        if (serviceFee.length === 0) {
+            logger.warn(`No "service fee" configuration found. Using default value: ${DEFAULT_SERVICE_FEE} coins.`);
+            return DEFAULT_SERVICE_FEE;
+        }
+        const coinPerSem = Number(serviceFee[0]?.value);
+
+        return coinPerSem;
+    } catch (error) {
+        throw new Error('Failed to retrieve "service fee" configuration:', error);
+    }
+};
+
+export const DBConfiguration = {
+    acceptedExtensions,
+    coinPerPage,
+    coinPerSem,
+    dollarToCoin,
+    coinToVnd,
+    bonusCoinPer100000Vnd,
+    getAll,
+    maxFileSize,
+    serviceFee
+};
