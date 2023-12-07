@@ -1,20 +1,6 @@
-# Fastify Template
+# Student Smart Printing Service 
 
 [![formatter: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg)](https://github.com/prettier/prettier) [![Commitizen friendly](https://img.shields.io/badge/commitizen-friendly-brightgreen.svg)](http://commitizen.github.io/cz-cli/) ![CI](https://github.com/phucvinh57/fastify-template/actions/workflows/ci.yml/badge.svg) ![Deploy](https://github.com/phucvinh57/fastify-template/actions/workflows/release.yml/badge.svg)
-
-Using [fastify](https://www.fastify.io), this template includes:
-
-- API Docs: `SwaggerUI`
-- Input validation: `fluent-json-schema`
-- ORM & migration tools: `Prisma`
-- Deployment:
-  - Dockerfile & docker-compose files
-  - Script CI/CD in `.github/workflows`
-- Testing: `jest`
-- Code linting & styling: `husky` + `prettier`
-- Precommit hook: `lint-staged`
-
-For applying conventional commits, refer [commitizen](https://github.com/commitizen/cz-cli).
 
 ## Prerequisites
 
@@ -22,10 +8,10 @@ For applying conventional commits, refer [commitizen](https://github.com/commiti
 - `docker-compose` v1.29.2
 - `node` v18.13.0
 - `npm` 8.19.3
+- `cups` 2.4.1
+- `cups-pdf` 3.0.1-14 (Virtual printer in case your computer is not connected to any actual printer)
 
 ## Commands
-
-Note: Fill in `.env` file (use template from `.env.example`) before starts.
 
 - `yarn bootstrap`: Set up development
 - `yarn barrels`: Gather export objects from many files in a folder and re-export in `index.ts` file. See configs in `.barrelsby.json`.
@@ -66,82 +52,38 @@ Note: Fill in `.env` file (use template from `.env.example`) before starts.
  ┗ 📜index.ts       # Program entry
 ```
 
-## Project configurations
 
-### Code linting & formating
+## Setup and Run Instructions
 
-We use [`eslint`](https://eslint.org/) to find and fix problem in code, such as:
+### Step 1: Set up Environment Variables
+Create a .env file and fill it with the required environment variables. Ensure you replace placeholders like with the actual values.  
+Note: Fill in `.env` file (use template from `.env.example`) before starts.  
+For example:
 
-- Unused variables
-- Use `var` declaration
-- Loosely comparation using `==`
-- ...
+``` .env
+FASTIFY_PORT=3000
+FASTIFY_TEST_PORT=3001
 
-You can run this command to test eslint script:
+POSTGRES_USER=db_user
+POSTGRES_PASSWORD=db_password
+POSTGRES_DB=ssps_db
+POSTGRES_PORT=5432
+POSTGRES_TEST_PORT=5433
+POSTGRES_URL=postgresql://db_user:db_password@localhost:5432/ssps_db
 
-```bash
-yarn lint
+# ... (Other environment variables)
 ```
 
-To maintain only one style coding across members, we use [`prettier`](https://prettier.io/). Try:
-
-```bash
-yarn format
+### Step 2: Run Bootstrap Command
+Run the following command to set up the development environment:
+```sh
+yarn bootstrap
 ```
+This command will likely install dependencies, set up configurations, and perform other necessary tasks.
 
-You don't need to run these scripts regularly or before commiting code. They are run automatically before `git commit` command by setting as a precommit script. In some circumstances, precommit script is not enabled by default, just type two commands below to fix it:
-
-```bash
-chmod ug+x .husky/*
-chmod ug+x .git/hooks/*
+### Step 3: Start the Application
+Run the following command to start the application:
+```sh
+yarn start
 ```
-
-For a tip, two plugins above could be installed in `VSCode`'s extensions.
-
-### Barrelsby & Path alias
-
-```py
-............
- ┣ 📂controllers
- ┃ ┗ 📜user.ctrler.ts
- ┣ 📂routes
- ┃ ┗ 📜user.route.ts
- ┣ 📂schemas
- ┃ ┣ 📂in
- ┃ ┃ ┣ 📜ids.schema.ts
- ┃ ┃ ┣ 📜user.schema.ts
- ┃ ┃ ┗ 📜index.ts
-............
-```
-
-Imagine you are in `user.ctrler.ts` and want to import `ASchema` from `ids.schema.ts`. The code can be like this:
-
-```typescript
-import { ASchema } from '../schemas/in/ids.schema.ts'
-```
-
-The more nested folders, the more bad looking importation. It is waste time to guess how many `..` should be put in relative path.
-
-The solution is [`barrelsby`](https://www.npmjs.com/package/barrelsby) and **path alias**. With configurations in `.barrelsby.json`, barrelsby can import your entire code base in a specific folder, and re-export them in `index.ts` file.
-
-Try this:
-
-```bash
-yarn barrels
-```
-
-To avoid using many `..` in relative path, config path alias in `tsconfig.json`. See the guideline [here](https://www.typescriptlang.org/docs/handbook/module-resolution.html#path-mapping).
-
-## Git working culture
-
-- For every updates, DO NOT push directly to `master` branch. Create a new branch, commit, publish branch and create a pull request (PR) instead.
-- A branch should have prefix `feat/` for a feature update, prefix `hotf/` for a hotfix, `improv/` for an improvement ...
-- A PR should be small enough to review. To split a large PR, use [stacked PRs](https://blog.logrocket.com/using-stacked-pull-requests-in-github/).
-
-## Helpful resources
-
-### Prisma
-
-- [Database schema](https://www.prisma.io/docs/concepts/components/prisma-schema)
-- [Type mapping Prisma & PostgreSQL](https://www.prisma.io/docs/concepts/database-connectors/postgresql#type-mapping-between-postgresql-to-prisma-schema)
-- [Schema references](https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference)
+This command will start your Node.js application. Ensure that ports 5432 and 8080 are available and not in use by other processes.
